@@ -3,7 +3,7 @@ const lopHocPhanService = require('../services/lopHocPhanService');
 const lopHocPhanController = {
     getAllLopHocPhan: async (req, res) => {
         try {
-            const { maHocKy } = req.query; // Lay tu params neu co
+            const { maHocKy } = req.query; 
             const data = await lopHocPhanService.getAll(maHocKy);
             res.json({ success: true, data });
         } catch (err) {
@@ -39,10 +39,8 @@ const lopHocPhanController = {
 
     moLopHocPhan: async (req, res) => {
         try {
-            // Lấy maLHP và maHK từ Body của Postman
             const { maLHP, maHK } = req.body; 
             
-            // Truyền xuống Service (Service sẽ dùng MaHocKy để khớp DB)
             await lopHocPhanService.moLop(maLHP, maHK);
             
             res.json({ 
@@ -70,7 +68,6 @@ const lopHocPhanController = {
 
     getLHPConCho: async (req, res) => {
         try {
-            // Lấy maHocKy từ Query String trên URL
             const { maHocKy } = req.query; 
             const data = await lopHocPhanService.getLHPConCho(maHocKy);
             

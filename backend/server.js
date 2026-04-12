@@ -24,7 +24,7 @@ app.use('/api/lop-hoc-phan', require('./routes/lopHocPhanRoutes'));
 app.use('/api/hoc-ky', require('./routes/hocKyRoutes'));
 app.use('/api/dang-ky', require('./routes/dangKyRoutes'));
 app.use('/api/diem', require('./routes/diemRoutes'));
-app.use('/api/bao-cao', require('./routes/baoCaoRoutes'));
+//app.use('/api/bao-cao', require('./routes/baoCaoRoutes'));
 
 /* Error handler */
 app.use(require('./middleware/errorHandler'));

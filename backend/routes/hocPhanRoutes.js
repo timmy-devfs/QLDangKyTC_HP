@@ -5,5 +5,7 @@ const hocPhanController = require('../controllers/hocPhanController');
 router.get('/', hocPhanController.getAllHocPhan);
 router.get('/:id/dieu-kien', hocPhanController.getDieuKien);
 router.delete('/:id', hocPhanController.deleteHocPhan); 
+router.post ('/add', hocPhanController.addHocPhan);
+router.put('/update/:id', hocPhanController.updateHocPhan);
 
 module.exports = router;
