@@ -5,9 +5,10 @@ const lopHocPhanService = {
     //Lay danh sach lop theo MaHocKy
    getAll: async (maHocKy) => {
         let sql = `
-            SELECT lhp.*, gv.HoTen AS TenGiangVien 
+            SELECT lhp.*, gv.HoTen AS TenGiangVien, hp.TenHP, (lhp.SiSoToiDa - lhp.SiSoHienTai) AS SoChoTrong
             FROM LopHocPhan lhp
             LEFT JOIN GiangVien gv ON lhp.MaGV = gv.MaGV
+            LEFT JOIN HocPhan hp ON lhp.MaHP = hp.MaHP
         `;
         let params = [];
         
@@ -28,6 +29,15 @@ const lopHocPhanService = {
             WHERE lhp.MaHP = ?
         `;
         return await db.execQuery(sql, [maHP]);
+    },
+
+    createLHP: async (data) => {
+        const { MaLHP, MaHP, MaGV, PhongHoc, ThuHoc, TietBatDau, SoTiet, SiSoToiDa, MaHocKy } = data;
+        const sql = `
+            INSERT INTO LopHocPhan (MaLHP, MaHP, MaGV, PhongHoc, ThuHoc, TietBatDau, SoTiet, SiSoToiDa, SiSoHienTai, MaHocKy) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+        `;
+        return await db.execQuery(sql, [MaLHP, MaHP, MaGV, PhongHoc, ThuHoc, TietBatDau, SoTiet, SiSoToiDa, MaHocKy]);
     },
 
     //Lay lop con cho (Dung SiSoToiDa va SiSoHienTai tu anh image_6d3f21.png)
@@ -64,7 +74,7 @@ const lopHocPhanService = {
         return await db.execQuery(sql, [MaLHP]);
     },
 
-    getLHPConCho: async (MaHocKy) => {
+    getLHPConChoProc: async (MaHocKy) => {
         const sql = "CALL sp_LayLopConCho(?)";
         const result = await db.execQuery(sql, [MaHocKy]);
         return result[0]; 

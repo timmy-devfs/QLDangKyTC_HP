@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ Thống Quản Lý Lớp Học Phần</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f4f7f6; color: #333; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        h2 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; width: 100%; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #666; }
+        
+        /* CSS Badge chuẩn theo Task 5 */
+        .badge { padding: 6px 12px; border-radius: 20px; color: white; font-weight: bold; font-size: 0.85rem; display: inline-block; min-width: 50px; text-align: center; }
+        .bg-danger { background-color: #dc3545; }  /* Đỏ < 20% */
+        .bg-warning { background-color: #ffc107; color: #212529; } /* Vàng 20-50% */
+        .bg-success { background-color: #28a745; } /* Xanh > 50% */
+
+        .btn-submit { background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+        .btn-close { color: #dc3545; background: white; border: 1px solid #dc3545; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: 0.3s; }
+        .btn-close:hover { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Mở Lớp Học Phần Mới</h2>
+        <form id="formMoLop">
+            <div class="form-grid">
+                <div class="form-group"><label>Mã Lớp</label><input type="text" id="MaLHP" placeholder="LHP_121000_02" required></div>
+                <div class="form-group"><label>Học Phần</label><select id="MaHP" required><option value="">Đang tải dữ liệu...</option></select></div>
+                <div class="form-group"><label>Giảng Viên (Mã)</label><input type="text" id="MaGV" placeholder="GV000001" required></div>
+                <div class="form-group"><label>Phòng</label><input type="text" id="PhongHoc" placeholder="A301" required></div>
+                <div class="form-group"><label>Thứ</label><input type="number" id="ThuHoc" min="2" max="8" value="2"></div>
+                <div class="form-group"><label>Tiết Bắt Đầu</label><input type="number" id="TietBatDau" min="1" max="10" value="1"></div>
+                <div class="form-group"><label>Số Tiết</label><input type="number" id="SoTiet" value="3"></div>
+                <div class="form-group"><label>Sĩ Số Tối Đa</label><input type="number" id="SiSoToiDa" value="40"></div>
+                <div class="form-group"><label>Mã Học Kỳ</label><input type="text" id="MaHocKy" value="HK2_2425" required></div>
+            </div>
+            <button type="submit" class="btn-submit">Mở Lớp</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Danh Sách Lớp Học Phần</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã Lớp</th><th>Tên Học Phần</th><th>Phòng</th><th>Thứ/Tiết</th><th>Sĩ Số (Badge)</th><th>Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody id="dsLop"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        async function loadHocPhan() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/hoc-phan`);
+                const result = await res.json();
+                const hocPhans = result.data || result;
+                const select = document.getElementById('MaHP');
+                if (hocPhans && hocPhans.length > 0) {
+                    select.innerHTML = hocPhans.map(hp => `<option value="${hp.MaHP}">${hp.TenHP}</option>`).join('');
+                } else {
+                    select.innerHTML = '<option value="">Không có dữ liệu học phần</option>';
+                }
+            } catch (err) {
+                document.getElementById('MaHP').innerHTML = '<option value="">Lỗi kết nối server (Cổng 3000)</option>';
+            }
+        }
+
+        async function loadLopHocPhan() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/lop-hoc-phan`);
+                const result = await res.json();
+                const lops = result.data || result;
+                const tbody = document.getElementById('dsLop');
+                
+                tbody.innerHTML = lops.map(l => {
+                    // TỰ TÍNH PHẦN TRĂM TẠI ĐÂY ĐỂ FIX LỖI "ĐỎ TOÀN TẬP"
+                    const phanTram = (l.SiSoHienTai / l.SiSoToiDa) * 100;
+                    
+                    let badgeClass = 'bg-danger'; // Mặc định Đỏ (< 20%)
+                    if (phanTram > 50) {
+                        badgeClass = 'bg-success'; // Màu Xanh: Khi sĩ số > 50%
+                    } else if (phanTram >= 20) {
+                        badgeClass = 'bg-warning'; // Màu Vàng: Khi sĩ số từ 20% đến 50%
+                    } else {
+                        badgeClass = 'bg-danger';  // Màu Đỏ: Khi sĩ số < 20%
+             }
+
+                    return `
+                        <tr>
+                            <td>${l.MaLHP}</td>
+                            <td>${l.TenHP || 'N/A'}</td>
+                            <td>${l.PhongHoc}</td>
+                            <td>Thứ ${l.ThuHoc}, Tiết ${l.TietBatDau}</td>
+                            <td><span class="badge ${badgeClass}">${l.SiSoHienTai}/${l.SiSoToiDa}</span></td>
+                            <td><button class="btn-close" onclick="dongLop('${l.MaLHP}')">Đóng Lớp</button></td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error("Lỗi load danh sách lớp:", err);
+            }
+        }
+
+        document.getElementById('formMoLop').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = {
+                MaLHP: document.getElementById('MaLHP').value,
+                MaHP: document.getElementById('MaHP').value,
+                MaGV: document.getElementById('MaGV').value,
+                PhongHoc: document.getElementById('PhongHoc').value,
+                ThuHoc: parseInt(document.getElementById('ThuHoc').value),
+                TietBatDau: parseInt(document.getElementById('TietBatDau').value),
+                SoTiet: parseInt(document.getElementById('SoTiet').value),
+                SiSoToiDa: parseInt(document.getElementById('SiSoToiDa').value),
+                MaHocKy: document.getElementById('MaHocKy').value
+            };
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/lop-hoc-phan/add`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const result = await res.json();
+                if(result.success) {
+                    alert('Mở lớp thành công!');
+                    loadLopHocPhan();
+                    e.target.reset();
+                } else {
+                    alert('Lỗi: ' + result.error);
+                }
+            } catch (err) {
+                alert('Không thể kết nối đến server!');
+            }
+        };
+
+        async function dongLop(id) {
+            if(confirm('Bạn có chắc muốn đóng lớp này?')) {
+                try {
+                    const res = await fetch(`${API_BASE_URL}/lop-hoc-phan/dong/${id}`, { method: 'POST' });
+                    const result = await res.json();
+                    if(result.success) {
+                        alert('Đã đóng lớp thành công!');
+                        loadLopHocPhan();
+                    }
+                } catch (err) {
+                    alert('Lỗi khi thực hiện đóng lớp!');
+                }
+            }
+        }
+
+        window.onload = () => {
+            loadHocPhan();
+            loadLopHocPhan();
+        };
+    </script>
+</body>
+</html>

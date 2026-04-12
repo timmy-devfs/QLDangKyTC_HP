@@ -10,4 +10,6 @@ router.post('/mo-lop', lopHocPhanController.moLopHocPhan);
 router.post('/dong-lop', lopHocPhanController.dongLopHocPhan);
 router.get('/con-cho', lopHocPhanController.getLHPConCho);
 
+//TASK 3.5
+router.post('/add', lopHocPhanController.createLHP);
 module.exports = router;
