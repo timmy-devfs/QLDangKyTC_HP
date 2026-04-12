@@ -1,13 +1,23 @@
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+// backend/middleware/auth.js
 
-const jwt = require('jsonwebtoken');
+const verifyToken = (req, res, next) => {
+    // Logic xác thực token của bạn...
+    next();
+};
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
-const JWT_EXPIRES = process.env.JWT_EXPIRES_IN || '24h';
+const checkRole = (roleRequired) => {
+    return (req, res, next) => {
+        // Giả sử req.user đã được gán ở verifyToken
+        if (req.user && req.user.role === roleRequired) {
+            next();
+        } else {
+            res.status(403).json({ message: "Bạn không có quyền truy cập!" });
+        }
+    };
+};
 
-module.exports = {
-   secret: JWT_SECRET,
-   sign(payload) { return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES }); },
-   verify(token) { return jwt.verify(token, JWT_SECRET); },
+// QUAN TRỌNG: Bạn phải export dạng Object nếu bên kia dùng Destructuring ({})
+module.exports = { 
+    verifyToken, 
+    checkRole 
 };
