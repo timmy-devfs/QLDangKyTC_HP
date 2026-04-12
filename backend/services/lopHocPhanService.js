@@ -78,7 +78,27 @@ const lopHocPhanService = {
         const sql = "CALL sp_LayLopConCho(?)";
         const result = await db.execQuery(sql, [MaHocKy]);
         return result[0]; 
-    }
+    },
+
+    getLHPDangKy: async (maHK) => {
+        // SQL JOIN 3 bảng: LopHocPhan, HocPhan, GiangVien
+        const sql = `
+            SELECT 
+                l.MaLHP AS maLHP, 
+                h.TenHP AS tenHP, 
+                g.HoTen AS GV, 
+                l.PhongHoc AS phong, 
+                CONCAT('Thứ ', l.ThuHoc, ', Tiết ', l.TietBatDau) AS lich,
+                (l.SiSoToiDa - l.SiSoHienTai) AS siSoConLai
+            FROM LopHocPhan l
+            JOIN HocPhan h ON l.MaHP = h.MaHP
+            JOIN GiangVien g ON l.MaGV = g.MaGV
+            WHERE l.MaHocKy = ? 
+              AND l.SiSoHienTai < l.SiSoToiDa
+        `;
+        const result = await db.execQuery(sql, [maHK]);
+        return result;
+    },
 
 };
 

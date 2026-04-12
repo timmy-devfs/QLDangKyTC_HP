@@ -40,13 +40,8 @@ const lopHocPhanController = {
     moLopHocPhan: async (req, res) => {
         try {
             const { maLHP, maHK } = req.body; 
-            
             await lopHocPhanService.moLop(maLHP, maHK);
-            
-            res.json({ 
-                success: true, 
-                message: "Mở lớp học phần thành công!" 
-            });
+            res.json({ success: true, message: "Mở lớp học phần thành công!" });
         } catch (err) {
             res.status(500).json({ success: false, error: err.message });
         }
@@ -56,11 +51,7 @@ const lopHocPhanController = {
         try {
             const { maLHP } = req.body;
             await lopHocPhanService.dongLop(maLHP);
-            
-            res.json({ 
-                success: true, 
-                message: "Đóng lớp học phần thành công!" 
-            });
+            res.json({ success: true, message: "Đóng lớp học phần thành công!" });
         } catch (err) {
             res.status(500).json({ success: false, error: err.message });
         }
@@ -70,11 +61,7 @@ const lopHocPhanController = {
         try {
             const { maHocKy } = req.query; 
             const data = await lopHocPhanService.getLHPConCho(maHocKy);
-            
-            res.json({ 
-                success: true, 
-                data: data 
-            });
+            res.json({ success: true, data: data });
         } catch (err) {
             res.status(500).json({ success: false, error: err.message });
         }
@@ -89,6 +76,20 @@ const lopHocPhanController = {
         }
     },
 
+    getLHPDangKy: async (req, res) => {
+        try {
+            const { maHK } = req.query; // Lấy từ link ?maHK=...
+            
+            if (!maHK) {
+                return res.status(400).json({ success: false, message: "Thiếu mã học kỳ (maHK)" });
+            }
+
+            const data = await lopHocPhanService.getLHPDangKy(maHK); // Gọi service xử lý
+            res.json({ success: true, data });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    }
 };
 
 module.exports = lopHocPhanController;
