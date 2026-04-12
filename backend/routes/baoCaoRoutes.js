@@ -1,17 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const baoCaoController = require('../controllers/baoCaoController');
-const authMiddleware = require('../middleware/authMiddleware');
-const { checkRole } = require('../middleware/roleMiddleware');
+// backend/routes/baoCaoRoutes.js
+// TV-05 | Task 5
+// Mount trong server.js: app.use("/api/bao-cao", require("./routes/baoCaoRoutes"));
 
-// Áp dụng authMiddleware + checkRole cho toàn bộ router báo cáo
-router.use(authMiddleware);
-router.use(checkRole('Admin'));
+const router = require("express").Router();
+const ctrl   = require("../controllers/baoCaoController");
+const { verifyToken, checkRole } = require("../middleware/authMiddleware");
 
-// GET /api/bao-cao/thong-ke?maHK=HK1_2425
-router.get('/thong-ke', baoCaoController.thongKe);
-
-// GET /api/bao-cao/export?type=excel&maHK=HK1_2425
-router.get('/export', baoCaoController.exportExcel);
+// Chỉ Admin mới được xem báo cáo & xuất Excel
+router.get("/thong-ke",  verifyToken, checkRole("Admin"), ctrl.thongKeTongQuan);
+router.get("/lop",       verifyToken, checkRole("Admin"), ctrl.thongKeLop);
+router.get("/export",    verifyToken, checkRole("Admin"), ctrl.exportExcel);
 
 module.exports = router;

@@ -1,22 +1,245 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>Dang nhap - He thong Dang ky Hoc phan</title>
-     <link rel="stylesheet" href="assets/css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đăng nhập – Hệ thống Quản lý Đăng ký Học phần</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <style>
+    /* ── Layout login ── */
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      margin: 0;
+    }
+
+    .login-card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      padding: 40px 48px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .login-logo h2 {
+      color: var(--primary);
+      font-size: 1.5rem;
+      margin: 8px 0 4px;
+    }
+    .login-logo p {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin: 0;
+    }
+
+    .login-card h3 {
+      text-align: center;
+      color: var(--text);
+      margin-bottom: 24px;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #d0d5dd;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: var(--font);
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(46,117,182,0.15);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 11px;
+      background: var(--primary);
+      color: #001aff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .btn-login:hover  { background: var(--primary-light); }
+    .btn-login:active { transform: scale(0.98); }
+
+    .btn-login:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    .alert-danger {
+      background: #fff0f0;
+      border: 1px solid #fca5a5;
+      color: var(--danger);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
 </head>
 <body>
-     <div class="login-container">
-         <h1>He thong Quan ly Dang ky Hoc phan</h1>
-         <form id="loginForm">
-             <input type="text"  id="username" placeholder="Ten dang nhap" required>
-             <input type="password" id="password" placeholder="Mat khau" required>
-             <button type="submit">Dang nhap</button>
-         </form>
-         <div id="errorMsg"></div>
-     </div>
-     <script src="assets/js/api.js"></script>
-     <script src="assets/js/auth.js"></script>
+  <div class="login-card">
+    <!-- Logo / Tiêu đề -->
+    <div class="login-logo">
+      <div style="font-size:2.5rem">🎓</div>
+      <h2>UTH – Quản lý ĐKHP</h2>
+      <p>Hệ thống Đăng ký Học phần Tín chỉ</p>
+    </div>
+
+    <h3>Đăng nhập hệ thống</h3>
+
+    <!-- Thông báo lỗi -->
+    <div id="errorMsg" class="alert-danger" role="alert"></div>
+
+    <!-- Form đăng nhập -->
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="username">Tên đăng nhập</label>
+        <input
+          type="text"
+          id="username"
+          class="form-control"
+          placeholder="Nhập tên đăng nhập..."
+          autocomplete="username"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Mật khẩu</label>
+        <input
+          type="password"
+          id="password"
+          class="form-control"
+          placeholder="Nhập mật khẩu..."
+          autocomplete="current-password"
+          required
+        />
+      </div>
+
+      <button type="submit" id="btnLogin" class="btn-login">
+        Đăng nhập
+      </button>
+    </form>
+
+    <div class="login-footer">
+      © 2026 UTH – Trường Đại học Giao thông Vận tải TP.HCM
+    </div>
+  </div>
+
+  <!-- auth.js không cần thiết ở trang login (chưa có token) -->
+  <script>
+    // Nếu đã đăng nhập → redirect ngay
+    const existingToken = localStorage.getItem("token");
+    const existingUser  = localStorage.getItem("userInfo");
+    if (existingToken && existingUser) {
+      const user = JSON.parse(existingUser);
+      const routes = {
+        Admin:      "/admin/dashboard.html",
+        GiangVien:  "/gv/nhap-diem.html",
+        SinhVien:   "/sv/dang-ky.html",
+      };
+      if (routes[user.vaiTro]) window.location.href = routes[user.vaiTro];
+    }
+
+    // Xử lý submit form
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const btn      = document.getElementById("btnLogin");
+      const errorDiv = document.getElementById("errorMsg");
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      // Reset lỗi
+      errorDiv.style.display = "none";
+      errorDiv.textContent   = "";
+
+      // Validate cơ bản
+      if (!username || !password) {
+        errorDiv.textContent   = "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.";
+        errorDiv.style.display = "block";
+        return;
+      }
+
+      btn.disabled     = true;
+      btn.textContent  = "Đang đăng nhập...";
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ tenDangNhap: username, matKhau: password }),
+        });
+        const data = await res.json();
+
+        if (!data.success) throw new Error(data.message);
+
+        // Lưu token + thông tin user vào localStorage
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userInfo", JSON.stringify({
+          vaiTro: data.vaiTro,
+          hoTen:  data.hoTen,
+          maSV:   data.maSV || null,
+          maGV:   data.maGV || null,
+        }));
+
+        // Redirect theo vai trò
+        const routes = {
+          Admin:      "/admin/dashboard.html",
+          GiangVien:  "/gv/nhap-diem.html",
+          SinhVien:   "/sv/dang-ky.html",
+        };
+        window.location.href = routes[data.vaiTro] || "/index.html";
+
+      } catch (err) {
+        errorDiv.textContent   = err.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+        errorDiv.style.display = "block";
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = "Đăng nhập";
+      }
+    });
+
+    // Enter ở ô mật khẩu = submit
+    document.getElementById("password").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("loginForm").requestSubmit();
+    });
+  </script>
 </body>
 </html>

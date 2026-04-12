@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Báo cáo – Quản lý ĐKHP</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <!-- Chart.js từ CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .chart-wrap {
+      position: relative;
+      height: 300px;
+    }
+    @media (max-width: 900px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filter-bar .form-group { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h4>🎓 UTH – ĐKHP</h4>
+      <small>Quản trị hệ thống</small>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="/admin/dashboard.html">  <span class="icon">📊</span> Dashboard</a></li>
+        <li><a href="/admin/sinh-vien.html">  <span class="icon">👨‍🎓</span> Sinh viên</a></li>
+        <li><a href="/admin/giang-vien.html"> <span class="icon">👨‍🏫</span> Giảng viên</a></li>
+        <li><a href="/admin/hoc-ky.html">     <span class="icon">📅</span> Học kỳ</a></li>
+        <li><a href="/admin/hoc-phan.html">   <span class="icon">📚</span> Học phần</a></li>
+        <li><a href="/admin/lop-hoc-phan.html"><span class="icon">🏫</span> Lớp HP</a></li>
+        <li><a href="/admin/bao-cao.html" class="active"><span class="icon">📈</span> Báo cáo</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="auth.logout()">🚪 Đăng xuất (<span id="tenUser"></span>)</button>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+    <header class="header">
+      <div class="header-title">📈 Báo cáo & Thống kê</div>
+    </header>
+
+    <main class="content">
+      <h1 class="page-title">📈 Báo cáo tổng hợp</h1>
+
+      <!-- ── Stat cards ── -->
+      <div id="statCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+        <div class="stat-card">        <div class="stat-icon">👨‍🎓</div><div><div class="stat-value" id="statSV">–</div><div class="stat-label">Sinh viên đang học</div></div></div>
+        <div class="stat-card green">  <div class="stat-icon">📚</div><div><div class="stat-value" id="statHP">–</div><div class="stat-label">Học phần</div></div></div>
+        <div class="stat-card orange"> <div class="stat-icon">🏫</div><div><div class="stat-value" id="statLop">–</div><div class="stat-label">Lớp đang mở</div></div></div>
+        <div class="stat-card red">    <div class="stat-icon">📝</div><div><div class="stat-value" id="statDK">–</div><div class="stat-label">Lượt đăng ký</div></div></div>
+      </div>
+
+      <!-- ── Biểu đồ ── -->
+      <div class="charts-grid">
+        <div class="card">
+          <div class="card-header"><h5>📊 Đăng ký theo lớp (Top 10)</h5></div>
+          <div class="card-body"><div class="chart-wrap"><canvas id="chartDangKy"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h5>🥧 Tỉ lệ đạt / rớt toàn hệ thống</h5></div>
+          <div class="card-body"><div class="chart-wrap"><canvas id="chartDatRot"></canvas></div></div>
+        </div>
+      </div>
+
+      <!-- ── Bảng chi tiết ── -->
+      <div class="card">
+        <div class="card-header">
+          <h5>📋 Chi tiết theo lớp học phần</h5>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <!-- Lọc theo học kỳ -->
+            <select id="selHocKy" class="form-control btn-sm" style="width:auto">
+              <option value="">-- Tất cả học kỳ --</option>
+            </select>
+            <!-- Xuất Excel -->
+            <button class="btn btn-success btn-sm" onclick="exportExcel()">
+              ⬇️ Xuất Excel
+            </button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrapper">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>Lớp HP</th>
+                  <th>Tên học phần</th>
+                  <th>TC</th>
+                  <th>Giảng viên</th>
+                  <th>Sĩ số</th>
+                  <th style="text-align:center">Đăng ký</th>
+                  <th style="text-align:center">Đạt</th>
+                  <th style="text-align:center">Rớt</th>
+                  <th style="text-align:center">Tỉ lệ đạt</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyLop">
+                <tr><td colspan="9" style="text-align:center;padding:32px"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/api.js"></script>
+<script>
+// ── Guard ────────────────────────────────────────────────────
+auth.requireAuth(["Admin"]);
+
+// ── Chart instances ──────────────────────────────────────────
+let chartDK  = null;
+let chartPie = null;
+
+// ── Tải stat cards ───────────────────────────────────────────
+async function loadTongQuan() {
+  try {
+    const { data } = await api.get("/bao-cao/thong-ke");
+    document.getElementById("statSV").textContent  = data.TongSV  ?? 0;
+    document.getElementById("statHP").textContent  = data.TongHP  ?? 0;
+    document.getElementById("statLop").textContent = data.LopDangMo ?? 0;
+    document.getElementById("statDK").textContent  = data.TongDangKy ?? 0;
+  } catch (e) {
+    console.error("Lỗi tải thống kê:", e.message);
+  }
+}
+
+// ── Tải bảng + biểu đồ theo học kỳ ──────────────────────────
+async function loadLop(maHK = "") {
+  const tbody = document.getElementById("tbodyLop");
+  tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>`;
+
+  try {
+    const ep = "/bao-cao/lop" + (maHK ? `?maHK=${encodeURIComponent(maHK)}` : "");
+    const { data } = await api.get(ep);
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📭</div><p>Chưa có dữ liệu</p></div></td></tr>`;
+      return;
+    }
+
+    // ── Bảng ────────────────────────────────────────────────
+    tbody.innerHTML = data.map(r => {
+      const tiLeDat = r.SoDangKy > 0
+        ? Math.round((r.SoDat / r.SoDangKy) * 100)
+        : null;
+      const badgeSiSo = r.SiSoHienTai / r.SiSoToiDa >= 0.5
+        ? "badge-green" : r.SiSoHienTai / r.SiSoToiDa >= 0.2
+        ? "badge-yellow" : "badge-red";
+      return `
+        <tr>
+          <td><code>${r.MaLHP}</code></td>
+          <td>${r.TenHP}</td>
+          <td style="text-align:center">${r.SoTinChi}</td>
+          <td>${r.TenGV}</td>
+          <td><span class="badge ${badgeSiSo}">${r.SiSoHienTai}/${r.SiSoToiDa}</span></td>
+          <td style="text-align:center"><strong>${r.SoDangKy}</strong></td>
+          <td style="text-align:center;color:var(--success)">${r.SoDat}</td>
+          <td style="text-align:center;color:var(--danger)">${r.SoRot}</td>
+          <td style="text-align:center">
+            ${tiLeDat !== null
+              ? `<span class="${tiLeDat>=70?'gpa-high':tiLeDat>=50?'gpa-med':'gpa-low'}">${tiLeDat}%</span>`
+              : '<span class="badge badge-gray">Chưa có điểm</span>'}
+          </td>
+        </tr>`;
+    }).join("");
+
+    // ── Bar chart: top 10 lớp đông nhất ─────────────────────
+    const top10 = [...data].sort((a,b) => b.SoDangKy - a.SoDangKy).slice(0, 10);
+    if (chartDK) chartDK.destroy();
+    chartDK = new Chart(document.getElementById("chartDangKy"), {
+      type: "bar",
+      data: {
+        labels:   top10.map(r => r.MaLHP),
+        datasets: [{
+          label:           "Số lượt đăng ký",
+          data:            top10.map(r => r.SoDangKy),
+          backgroundColor: "rgba(46,117,182,0.75)",
+          borderRadius:    6,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales:  { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      },
+    });
+
+    // ── Pie chart: đạt/rớt toàn bộ ──────────────────────────
+    const totalDat = data.reduce((s,r) => s + r.SoDat, 0);
+    const totalRot = data.reduce((s,r) => s + r.SoRot, 0);
+    const totalChua= data.reduce((s,r) => s + r.ChuaCoDiem, 0);
+
+    if (chartPie) chartPie.destroy();
+    chartPie = new Chart(document.getElementById("chartDatRot"), {
+      type: "doughnut",
+      data: {
+        labels:   ["Đạt (A–D)", "Rớt (F)", "Chưa có điểm"],
+        datasets: [{
+          data:            [totalDat, totalRot, totalChua],
+          backgroundColor: ["#1E6B3C","#C00000","#aaa"],
+          hoverOffset:     8,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: "bottom" } },
+      },
+    });
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:24px">Lỗi tải dữ liệu: ${e.message}</td></tr>`;
+  }
+}
+
+// ── Tải danh sách học kỳ cho dropdown ────────────────────────
+async function loadHocKy() {
+  try {
+    const { data } = await api.get("/hoc-ky");
+    const sel = document.getElementById("selHocKy");
+    data.forEach(hk => {
+      const opt = document.createElement("option");
+      opt.value       = hk.MaHocKy;
+      opt.textContent = hk.TenHocKy;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", () => loadLop(sel.value));
+  } catch (e) {
+    console.warn("Không tải được danh sách học kỳ:", e.message);
+  }
+}
+
+// ── Xuất Excel ───────────────────────────────────────────────
+function exportExcel() {
+  const token = auth.getToken();
+  // Mở URL trực tiếp với Authorization header trong query (cách đơn giản)
+  // Cách đúng hơn: tạo blob từ fetch, nhưng dưới đây đủ cho demo
+  window.open(`/api/bao-cao/export?token=${encodeURIComponent(token)}`);
+  // Lưu ý: server.js cần đọc token từ query nếu dùng cách này
+  // Hoặc dùng fetch + blob:
+  // const res = await fetch("/api/bao-cao/export", { headers: auth.getHeaders() });
+  // const blob = await res.blob();
+  // const url  = URL.createObjectURL(blob);
+  // Object.assign(document.createElement("a"), { href:url, download:"BangDiem.xlsx" }).click();
+}
+
+// ── Khởi chạy ────────────────────────────────────────────────
+(async () => {
+  await loadTongQuan();
+  await loadHocKy();
+  await loadLop();
+})();
+</script>
+</body>
+</html>

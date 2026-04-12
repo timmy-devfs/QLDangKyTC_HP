@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thời khoá biểu – Quản lý ĐKHP</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <style>
+    /* ── TKB Grid ─────────────────────────────────────────────── */
+    .tkb-wrapper {
+      overflow-x: auto;
+    }
+    .tkb-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+      font-size: 0.82rem;
+      background: var(--white);
+    }
+    .tkb-table th {
+      background:  var(--primary);
+      color:       #fff;
+      padding:     10px 8px;
+      text-align:  center;
+      font-weight: 600;
+      border:      1px solid rgba(255,255,255,0.2);
+    }
+    .tkb-table td {
+      border:     1px solid var(--border);
+      min-height: 44px;
+      height:     44px;
+      padding:    0;
+      vertical-align: top;
+    }
+    .tkb-tiet-label {
+      background:  #f8fafc;
+      padding:     4px 8px;
+      text-align:  center;
+      font-weight: 600;
+      color:       var(--text-muted);
+      font-size:   0.78rem;
+      height:      100%;
+      display:     flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .tkb-tiet-label small { font-size: 0.68rem; opacity: 0.7; }
+
+    /* Ô có môn học */
+    .tkb-mon-block {
+      padding:       5px 8px;
+      border-radius: 4px;
+      height:        100%;
+      display:       flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .tkb-mon-block:hover { opacity: 0.85; }
+    .tkb-mon-block .mon-name { font-weight: 600; font-size: 0.78rem; }
+    .tkb-mon-block .mon-info { font-size: 0.68rem; opacity: 0.8; }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+    .legend-color {
+      width: 16px; height: 16px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Filter bar */
+    .filter-bar { display:flex; gap:10px; align-items:flex-end; margin-bottom:20px; flex-wrap:wrap; }
+    .filter-bar .form-group { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h4>🎓 UTH – ĐKHP</h4>
+      <small id="tenUser">Sinh viên</small>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="/sv/dang-ky.html">       <span class="icon">📝</span> Đăng ký HP</a></li>
+        <li><a href="/sv/ket-qua.html">        <span class="icon">📊</span> Kết quả học tập</a></li>
+        <li><a href="/sv/thoi-khoa-bieu.html" class="active"><span class="icon">🗓️</span> Thời khoá biểu</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="auth.logout()">🚪 Đăng xuất</button>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+    <header class="header">
+      <div class="header-title">🗓️ Thời khoá biểu</div>
+    </header>
+
+    <main class="content">
+      <h1 class="page-title">🗓️ Thời khoá biểu cá nhân</h1>
+
+      <!-- Filter -->
+      <div class="filter-bar">
+        <div class="form-group">
+          <label class="form-label">Học kỳ</label>
+          <select id="selHocKy" class="form-control" style="min-width:200px">
+            <option value="">-- Chọn học kỳ --</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="loadTKB()">🔍 Xem TKB</button>
+      </div>
+
+      <!-- Ghi chú màu sắc -->
+      <div id="legend" class="legend" style="display:none"></div>
+
+      <!-- TKB -->
+      <div class="card">
+        <div class="card-body" style="padding:0">
+          <div class="tkb-wrapper">
+            <div id="tkbContainer">
+              <div class="empty-state" style="padding:60px 0">
+                <div class="empty-icon">🗓️</div>
+                <p>Chọn học kỳ để xem thời khoá biểu</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danh sách môn đã đăng ký (bên dưới) -->
+      <div id="dsMon" style="display:none;margin-top:20px">
+        <div class="card">
+          <div class="card-header"><h5>📋 Danh sách môn đã đăng ký</h5></div>
+          <div class="card-body" style="padding:0">
+            <div class="table-wrapper">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Màu</th>
+                    <th>Mã lớp</th>
+                    <th>Học phần</th>
+                    <th>TC</th>
+                    <th>Giảng viên</th>
+                    <th>Thứ</th>
+                    <th>Tiết</th>
+                    <th>Phòng</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyMon"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/api.js"></script>
+<script>
+// ── Guard ────────────────────────────────────────────────────
+auth.requireAuth(["SinhVien"]);
+const user = auth.getUser();
+const maSV = user?.maSV;
+
+// Tên thứ
+const THU_LABELS = { 2:"Thứ 2", 3:"Thứ 3", 4:"Thứ 4", 5:"Thứ 5", 6:"Thứ 6", 7:"Thứ 7" };
+const TIET_COUNT = 12;  // tiết 1-12
+
+// Màu cho mỗi môn (xoay vòng)
+const COLORS = [
+  { bg:"#dbeafe", text:"#1e40af" },
+  { bg:"#dcfce7", text:"#166534" },
+  { bg:"#fef9c3", text:"#854d0e" },
+  { bg:"#fce7f3", text:"#9d174d" },
+  { bg:"#ede9fe", text:"#5b21b6" },
+  { bg:"#ffedd5", text:"#9a3412" },
+  { bg:"#cffafe", text:"#155e75" },
+  { bg:"#d1fae5", text:"#065f46" },
+];
+
+// ── Load danh sách học kỳ ─────────────────────────────────────
+async function loadHocKy() {
+  try {
+    const { data } = await api.get("/hoc-ky");
+    const sel = document.getElementById("selHocKy");
+    data.forEach(hk => {
+      const opt = document.createElement("option");
+      opt.value = hk.MaHocKy;
+      opt.textContent = hk.TenHocKy;
+      sel.appendChild(opt);
+    });
+    // Tự load HK đầu tiên
+    if (data.length) {
+      sel.value = data[0].MaHocKy;
+      await loadTKB();
+    }
+  } catch (e) {
+    console.error("Lỗi tải học kỳ:", e.message);
+  }
+}
+
+// ── Load và render TKB ───────────────────────────────────────
+async function loadTKB() {
+  const maHK = document.getElementById("selHocKy").value;
+  if (!maHK) return;
+
+  const container = document.getElementById("tkbContainer");
+  container.innerHTML = `<div style="text-align:center;padding:48px"><div class="spinner"></div></div>`;
+
+  try {
+    // Lấy danh sách lớp đã đăng ký của SV trong HK này
+    const { data } = await api.get(
+      `/dang-ky?maSV=${encodeURIComponent(maSV)}&maHK=${encodeURIComponent(maHK)}`
+    );
+
+    if (!data || !data.length) {
+      container.innerHTML = `
+        <div class="empty-state" style="padding:60px 0">
+          <div class="empty-icon">📭</div>
+          <p>Học kỳ này chưa có môn nào được đăng ký</p>
+        </div>`;
+      document.getElementById("legend").style.display = "none";
+      document.getElementById("dsMon").style.display  = "none";
+      return;
+    }
+
+    // Gán màu cho mỗi môn
+    const colorMap = {};
+    data.forEach((lhp, i) => {
+      colorMap[lhp.MaLHP] = COLORS[i % COLORS.length];
+    });
+
+    // ── Xây dựng bảng TKB ────────────────────────────────────
+    // Grid: rows = tiết 1-12, cols = thứ 2-7
+    // Tạo ma trận: matrix[thu][tiet] = lhp hoặc null
+    const matrix = {};
+    for (let thu = 2; thu <= 7; thu++) {
+      matrix[thu] = {};
+      for (let tiet = 1; tiet <= TIET_COUNT; tiet++) matrix[thu][tiet] = null;
+    }
+    // Đánh dấu các ô bị chiếm (rowspan)
+    const occupied = {};  // key = "thu-tiet" → true nếu đã được span trước đó
+
+    data.forEach(lhp => {
+      const tBD = lhp.TietBatDau;
+      const tKT = tBD + lhp.SoTiet - 1;
+      for (let t = tBD; t <= Math.min(tKT, TIET_COUNT); t++) {
+        matrix[lhp.ThuHoc][t] = (t === tBD) ? lhp : "SPAN";
+      }
+    });
+
+    // ── Build HTML table ─────────────────────────────────────
+    let html = `
+      <table class="tkb-table">
+        <thead>
+          <tr>
+            <th style="width:72px">Tiết</th>
+            ${[2,3,4,5,6,7].map(t => `<th>${THU_LABELS[t]}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>`;
+
+    for (let tiet = 1; tiet <= TIET_COUNT; tiet++) {
+      html += `<tr>`;
+      // Cột tiết
+      html += `<td><div class="tkb-tiet-label">
+                 <span>${tiet}</span>
+                 <small>${tietToTime(tiet)}</small>
+               </div></td>`;
+
+      for (let thu = 2; thu <= 7; thu++) {
+        const cell = matrix[thu][tiet];
+        if (cell === "SPAN") {
+          // Bỏ qua – đã bị rowspan từ ô trên
+          continue;
+        }
+        if (cell && cell !== "SPAN") {
+          const lhp   = cell;
+          const color = colorMap[lhp.MaLHP];
+          const rows  = lhp.SoTiet;
+          html += `
+            <td rowspan="${rows}" style="padding:3px">
+              <div class="tkb-mon-block"
+                   style="background:${color.bg};color:${color.text}"
+                   title="${lhp.TenHP} | ${lhp.TenGV} | Phòng ${lhp.PhongHoc || '?'}">
+                <div class="mon-name">${lhp.TenHP}</div>
+                <div class="mon-info">${lhp.TenGV}</div>
+                <div class="mon-info">Phòng ${lhp.PhongHoc || "?"}</div>
+              </div>
+            </td>`;
+        } else {
+          html += `<td></td>`;
+        }
+      }
+      html += `</tr>`;
+    }
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+
+    // ── Legend ───────────────────────────────────────────────
+    const legendEl = document.getElementById("legend");
+    legendEl.style.display = "flex";
+    legendEl.innerHTML = data.map(lhp => {
+      const c = colorMap[lhp.MaLHP];
+      return `<div class="legend-item">
+        <div class="legend-color" style="background:${c.bg};border:2px solid ${c.text}"></div>
+        <span style="color:${c.text};font-weight:600">${lhp.TenHP}</span>
+      </div>`;
+    }).join("");
+
+    // ── Danh sách môn ────────────────────────────────────────
+    document.getElementById("dsMon").style.display = "block";
+    document.getElementById("tbodyMon").innerHTML = data.map((lhp, i) => {
+      const c = colorMap[lhp.MaLHP];
+      return `<tr>
+        <td><div style="width:18px;height:18px;border-radius:3px;background:${c.bg};border:2px solid ${c.text}"></div></td>
+        <td><code>${lhp.MaLHP}</code></td>
+        <td><strong>${lhp.TenHP}</strong> (${lhp.MaHP})</td>
+        <td style="text-align:center">${lhp.SoTinChi}</td>
+        <td>${lhp.TenGV}</td>
+        <td style="text-align:center">${THU_LABELS[lhp.ThuHoc]}</td>
+        <td style="text-align:center">Tiết ${lhp.TietBatDau}–${lhp.TietBatDau + lhp.SoTiet - 1}</td>
+        <td>${lhp.PhongHoc || "–"}</td>
+      </tr>`;
+    }).join("");
+
+  } catch (e) {
+    container.innerHTML = `
+      <div class="empty-state" style="padding:60px 0">
+        <div class="empty-icon">⚠️</div>
+        <p style="color:var(--danger)">Lỗi tải thời khoá biểu: ${e.message}</p>
+      </div>`;
+  }
+}
+
+// ── Tiết → giờ học ───────────────────────────────────────────
+function tietToTime(tiet) {
+  // Giờ học mẫu UTH: Tiết 1 bắt đầu 7:30
+  const starts = {
+     1:"7:30",  2:"8:15",  3:"9:10",  4:"9:55",
+     5:"10:40", 6:"11:25",
+     7:"13:00", 8:"13:45", 9:"14:30",
+    10:"15:15",11:"16:00",12:"16:45",
+  };
+  return starts[tiet] || "";
+}
+
+// ── Khởi chạy ────────────────────────────────────────────────
+loadHocKy();
+</script>
+</body>
+</html>
