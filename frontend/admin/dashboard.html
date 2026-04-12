@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Quản trị - Hệ thống Đăng ký Học phần</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/components.css">
+    <style>
+        /* ===== LAYOUT ===== */
+        .layout { display: flex; min-height: 100vh; }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 250px; flex-shrink: 0;
+            background: var(--color-secondary);
+            display: flex; flex-direction: column;
+            box-shadow: 2px 0 8px rgba(0,0,0,.2);
+        }
+        .sidebar-brand {
+            padding: 24px 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-brand h2 {
+            color: #fff; font-size: 15px; font-weight: 700;
+            line-height: 1.4; letter-spacing: .3px;
+        }
+        .sidebar-brand span { color: #a8c7e8; font-size: 12px; }
+        .sidebar-nav { flex: 1; padding: 16px 0; }
+        .nav-section {
+            padding: 8px 20px 4px;
+            font-size: 10px; font-weight: 700; letter-spacing: 1px;
+            color: rgba(255,255,255,0.4); text-transform: uppercase;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 11px 20px;
+            color: rgba(255,255,255,0.75); text-decoration: none;
+            font-size: 14px; transition: all .15s;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .nav-item.active {
+            background: rgba(46,117,182,0.4); color: #fff;
+            border-left-color: var(--color-primary);
+        }
+        .nav-item .icon { width: 18px; text-align: center; font-style: normal; }
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-footer .user-info { color: rgba(255,255,255,0.6); font-size: 12px; margin-bottom: 10px; }
+        .sidebar-footer .user-info strong { display: block; color: #fff; font-size: 14px; }
+        .btn-logout {
+            width: 100%; padding: 9px;
+            background: rgba(192,0,0,0.7); color: #fff;
+            border: none; border-radius: 5px; cursor: pointer; font-size: 13px;
+            transition: background .15s;
+        }
+        .btn-logout:hover { background: var(--color-danger); }
+
+        /* ===== MAIN ===== */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar {
+            background: #fff; padding: 16px 28px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+        }
+        .topbar h1 { font-size: 18px; color: var(--color-secondary); font-weight: 700; }
+        .topbar-meta { font-size: 13px; color: #64748b; }
+        .content { flex: 1; padding: 28px; overflow-y: auto; }
+
+        /* ===== STAT CARDS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px; margin-bottom: 28px;
+        }
+        .stat-card {
+            background: #fff; border-radius: 10px; padding: 22px 24px;
+            display: flex; align-items: center; gap: 16px;
+            box-shadow: var(--shadow); border-left: 4px solid transparent;
+            transition: transform .15s, box-shadow .15s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+        .stat-card.blue  { border-left-color: #2E75B6; }
+        .stat-card.green { border-left-color: #1E6F50; }
+        .stat-card.amber { border-left-color: #C55A11; }
+        .stat-card.red   { border-left-color: #C00000; }
+        .stat-icon {
+            width: 48px; height: 48px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .stat-card.blue  .stat-icon { background: #dbeafe; }
+        .stat-card.green .stat-icon { background: #d5f0e4; }
+        .stat-card.amber .stat-icon { background: #fff2cc; }
+        .stat-card.red   .stat-icon { background: #fadadd; }
+        .stat-info .stat-label { font-size: 12px; color: #64748b; font-weight: 500; }
+        .stat-info .stat-value {
+            font-size: 28px; font-weight: 700; color: var(--color-secondary);
+            line-height: 1.2; margin-top: 2px;
+        }
+        .stat-info .stat-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+        /* ===== PANELS ===== */
+        .panels-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 900px) { .panels-grid { grid-template-columns: 1fr; } }
+        .panel {
+            background: #fff; border-radius: 10px;
+            box-shadow: var(--shadow); overflow: hidden;
+        }
+        .panel-header {
+            padding: 16px 20px; border-bottom: 1px solid #f1f5f9;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .panel-header h3 { font-size: 15px; color: var(--color-secondary); font-weight: 700; }
+        .panel-body { padding: 0; }
+        .panel-list { list-style: none; }
+        .panel-list li {
+            padding: 13px 20px; border-bottom: 1px solid #f8fafc;
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 13px; transition: background .1s;
+        }
+        .panel-list li:last-child { border-bottom: none; }
+        .panel-list li:hover { background: #f8fafc; }
+        .panel-list .li-left { display: flex; flex-direction: column; gap: 2px; }
+        .panel-list .li-name { font-weight: 600; color: #1e293b; }
+        .panel-list .li-sub  { color: #64748b; font-size: 12px; }
+
+        /* ===== QUICK ACTIONS ===== */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px; padding: 16px 20px;
+        }
+        .action-card {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 8px; padding: 18px 12px;
+            border: 2px solid #e2e8f0; border-radius: 8px;
+            text-decoration: none; color: var(--color-secondary);
+            font-size: 13px; font-weight: 600; text-align: center;
+            transition: all .15s; background: #fafafa;
+        }
+        .action-card:hover {
+            border-color: var(--color-primary); background: #eff6ff;
+            color: var(--color-primary); transform: translateY(-2px);
+        }
+        .action-card .ac-icon { font-size: 28px; }
+
+        /* ===== LOADING / ERROR ===== */
+        .loading { color: #94a3b8; font-size: 13px; padding: 20px; text-align: center; }
+        .hk-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h2>🎓 QL Đăng ký<br>Học phần Tín chỉ</h2>
+            <span>Quản trị hệ thống</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Tổng quan</div>
+            <a href="dashboard.html" class="nav-item active">
+                <i class="icon">📊</i> Dashboard
+            </a>
+            <div class="nav-section">Quản lý dữ liệu</div>
+            <a href="sinh-vien.html" class="nav-item">
+                <i class="icon">👩‍🎓</i> Sinh viên
+            </a>
+            <a href="giang-vien.html" class="nav-item">
+                <i class="icon">👨‍🏫</i> Giảng viên
+            </a>
+            <a href="hoc-phan.html" class="nav-item">
+                <i class="icon">📚</i> Học phần
+            </a>
+            <a href="lop-hoc-phan.html" class="nav-item">
+                <i class="icon">🏫</i> Lớp học phần
+            </a>
+            <a href="hoc-ky.html" class="nav-item">
+                <i class="icon">📅</i> Học kỳ
+            </a>
+            <div class="nav-section">Báo cáo</div>
+            <a href="bao-cao.html" class="nav-item">
+                <i class="icon">📈</i> Thống kê & Báo cáo
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <strong id="sidebarUserName">Admin</strong>
+                Quản trị viên hệ thống
+            </div>
+            <button class="btn-logout" onclick="handleLogout()">⏏ Đăng xuất</button>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+        <header class="topbar">
+            <h1>📊 Tổng quan hệ thống</h1>
+            <div class="topbar-meta" id="currentDateTime">--</div>
+        </header>
+
+        <div class="content">
+            <!-- STAT CARDS -->
+            <div class="stats-grid">
+                <div class="stat-card blue">
+                    <div class="stat-icon">👩‍🎓</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Tổng sinh viên</div>
+                        <div class="stat-value" id="statSV">--</div>
+                        <div class="stat-sub">Đang hoạt động</div>
+                    </div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-icon">👨‍🏫</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Tổng giảng viên</div>
+                        <div class="stat-value" id="statGV">--</div>
+                        <div class="stat-sub">Trong hệ thống</div>
+                    </div>
+                </div>
+                <div class="stat-card amber">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Học phần</div>
+                        <div class="stat-value" id="statHP">--</div>
+                        <div class="stat-sub">Đã đăng ký môn học</div>
+                    </div>
+                </div>
+                <div class="stat-card red">
+                    <div class="stat-icon">🏫</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Lớp học phần</div>
+                        <div class="stat-value" id="statLHP">--</div>
+                        <div class="stat-sub">Đang hoạt động</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANELS -->
+            <div class="panels-grid">
+                <!-- Học kỳ hiện tại -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>📅 Học kỳ đang hoạt động</h3>
+                        <a href="hoc-ky.html" style="font-size:12px;color:var(--color-primary);text-decoration:none;">Xem tất cả →</a>
+                    </div>
+                    <div class="panel-body">
+                        <ul class="panel-list" id="hocKyList">
+                            <li><span class="loading">Đang tải...</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Truy cập nhanh -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>⚡ Truy cập nhanh</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="actions-grid">
+                            <a href="sinh-vien.html" class="action-card">
+                                <span class="ac-icon">👩‍🎓</span>
+                                Quản lý<br>Sinh viên
+                            </a>
+                            <a href="giang-vien.html" class="action-card">
+                                <span class="ac-icon">👨‍🏫</span>
+                                Quản lý<br>Giảng viên
+                            </a>
+                            <a href="hoc-phan.html" class="action-card">
+                                <span class="ac-icon">📚</span>
+                                Quản lý<br>Học phần
+                            </a>
+                            <a href="lop-hoc-phan.html" class="action-card">
+                                <span class="ac-icon">🏫</span>
+                                Quản lý<br>Lớp HP
+                            </a>
+                            <a href="hoc-ky.html" class="action-card">
+                                <span class="ac-icon">📅</span>
+                                Quản lý<br>Học kỳ
+                            </a>
+                            <a href="bao-cao.html" class="action-card">
+                                <span class="ac-icon">📈</span>
+                                Thống kê<br>Báo cáo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+    // ===== GUARD: Chỉ Admin mới được vào trang này =====
+    (function() {
+        const user = auth.getUser();
+        if (!auth.isLoggedIn() || !user) {
+            window.location.href = '/index.html';
+            return;
+        }
+        if (user.vaiTro !== 'Admin') {
+            auth.redirectByRole(user.vaiTro);
+            return;
+        }
+        document.getElementById('sidebarUserName').textContent = 'Admin';
+    })();
+
+    // ===== DATETIME =====
+    function updateDateTime() {
+        const now = new Date();
+        document.getElementById('currentDateTime').textContent =
+            now.toLocaleString('vi-VN', { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 30000);
+
+    // ===== LOAD STATS =====
+    async function loadStats() {
+        try {
+            // Tải học phần (dùng API đang có)
+            const hpRes = await api.get('/hoc-phan?page=1&limit=1');
+            document.getElementById('statHP').textContent = hpRes.pagination?.total ?? '--';
+        } catch (e) {
+            document.getElementById('statHP').textContent = 'N/A';
+        }
+
+        // Các stats khác — placeholder đến khi có API thống kê
+        // Sẽ gọi /api/bao-cao/thong-ke khi đã build xong
+        document.getElementById('statSV').textContent = '25';
+        document.getElementById('statGV').textContent = '10';
+        document.getElementById('statLHP').textContent = '19';
+    }
+
+    // ===== LOAD HOC KY =====
+    async function loadHocKy() {
+        const list = document.getElementById('hocKyList');
+        try {
+            const data = await api.get('/hoc-ky');
+            const active = Array.isArray(data)
+                ? data.filter(hk => ['Đang học', 'Đang mở đăng ký'].includes(hk.TrangThai))
+                : [];
+
+            if (active.length === 0) {
+                list.innerHTML = '<li><span class="loading">Không có học kỳ đang hoạt động</span></li>';
+                return;
+            }
+
+            const statusColor = { 'Đang học': 'badge-success', 'Đang mở đăng ký': 'badge-warning' };
+            list.innerHTML = active.map(hk => `
+                <li>
+                    <div class="li-left">
+                        <span class="li-name">${hk.TenHocKy}</span>
+                        <span class="li-sub">Năm học: ${hk.NamHoc}</span>
+                    </div>
+                    <span class="badge ${statusColor[hk.TrangThai] || 'badge-warning'}">${hk.TrangThai}</span>
+                </li>
+            `).join('');
+        } catch (e) {
+            list.innerHTML = '<li><span class="loading">Chưa có API /hoc-ky</span></li>';
+        }
+    }
+
+    // ===== LOGOUT =====
+    function handleLogout() {
+        if (confirm('Bạn có chắc muốn đăng xuất?')) auth.logout();
+    }
+
+    // ===== INIT =====
+    loadStats();
+    loadHocKy();
+</script>
+</body>
+</html>

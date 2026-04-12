@@ -1,0 +1,24 @@
+/* Components CSS - TV-05 phu trach */
+
+/* Button */
+.btn { padding: 8px 18px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+.btn-primary { background: var(--color-primary); color: white; }
+.btn-danger  { background: var(--color-danger);  color: white; }
+.btn-success { background: var(--color-success); color: white; }
+
+/* Table */
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 10px 12px; border: 1px solid #ddd; text-align: left; }
+.table th { background: var(--color-secondary); color: white; }
+
+/* Badge */
+.badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; }
+.badge-success { background: #D5F0E4; color: #1E6F50; }
+.badge-warning { background: #FFF2CC; color: #7F6000; }
+.badge-danger  { background: #FADADD; color: #C00000; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0;
+   background: rgba(0,0,0,.5); z-index: 1000; }
+.modal-box { background: white; padding: 24px; border-radius: 8px;
+   max-width: 500px; margin: 10vh auto; }
