@@ -1,13 +1,13 @@
-const db = require('../config/db');
+const { execQuery } = require('../config/db');
 
 const hocKyController = {
     // [GET] /api/hoc-ky: Lấy danh sách học kỳ
     getAll: async (req, res) => {
         try {
-            const [rows] = await db.execute('SELECT * FROM HocKy ORDER BY NamHoc DESC, HocKySo DESC');
-            res.json(rows);
+            const rows = await execQuery('SELECT * FROM HocKy ORDER BY NamHoc DESC, HocKySo DESC');
+            res.json({ success: true, data: rows });
         } catch (err) {
-            res.status(500).json({ message: "Lỗi lấy danh sách: " + err.message });
+            res.status(500).json({ success: false, message: "Lỗi lấy danh sách: " + err.message });
         }
     },
 
@@ -15,14 +15,14 @@ const hocKyController = {
     create: async (req, res) => {
         const { MaHocKy, TenHocKy, NamHoc, HocKySo, NgayBatDauDK, NgayKetThucDK } = req.body;
         try {
-            await db.execute(
+            await execQuery(
                 `INSERT INTO HocKy (MaHocKy, TenHocKy, NamHoc, HocKySo, NgayBatDauDK, NgayKetThucDK, TrangThai) 
                  VALUES (?, ?, ?, ?, ?, ?, 'Đã đóng')`,
                 [MaHocKy, TenHocKy, NamHoc, HocKySo, NgayBatDauDK, NgayKetThucDK]
             );
-            res.status(201).json({ message: 'Tạo học kỳ thành công' });
+            res.status(201).json({ success: true, message: 'Tạo học kỳ thành công' });
         } catch (err) {
-            res.status(500).json({ message: "Lỗi tạo mới: " + err.message });
+            res.status(500).json({ success: false, message: "Lỗi tạo mới: " + err.message });
         }
     },
 
@@ -34,7 +34,7 @@ const hocKyController = {
         try {
             // Logic quan trọng: Nếu muốn mở đăng ký, phải kiểm tra xem có HK nào đang mở không
             if (targetStatus === 'Đang mở đăng ký') {
-                const [active] = await db.execute(
+                const active = await execQuery(
                     "SELECT MaHocKy FROM HocKy WHERE TrangThai = 'Đang mở đăng ký' AND MaHocKy != ?",
                     [id]
                 );
@@ -45,10 +45,10 @@ const hocKyController = {
                 }
             }
 
-            await db.execute('UPDATE HocKy SET TrangThai = ? WHERE MaHocKy = ?', [targetStatus, id]);
-            res.json({ message: 'Cập nhật trạng thái thành công' });
+            await execQuery('UPDATE HocKy SET TrangThai = ? WHERE MaHocKy = ?', [targetStatus, id]);
+            res.json({ success: true, message: 'Cập nhật trạng thái thành công' });
         } catch (err) {
-            res.status(500).json({ message: "Lỗi cập nhật: " + err.message });
+            res.status(500).json({ success: false, message: "Lỗi cập nhật: " + err.message });
         }
     }
 };

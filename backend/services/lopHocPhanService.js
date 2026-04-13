@@ -82,22 +82,28 @@ const lopHocPhanService = {
 
     getLHPDangKy: async (maHK) => {
         // SQL JOIN 3 bảng: LopHocPhan, HocPhan, GiangVien
+        // Yêu cầu trả đúng tên field: MaLHP, TenHP, MaHP, SoTinChi, TenGV, HocVi, ThuHoc, TietBatDau, SoTiet, PhongHoc, SiSoHienTai, SiSoToiDa
         const sql = `
             SELECT 
-                l.MaLHP AS maLHP, 
-                h.TenHP AS tenHP, 
-                g.HoTen AS GV, 
-                l.PhongHoc AS phong, 
-                CONCAT('Thứ ', l.ThuHoc, ', Tiết ', l.TietBatDau) AS lich,
-                (l.SiSoToiDa - l.SiSoHienTai) AS siSoConLai
+                l.MaLHP, 
+                h.TenHP, 
+                h.MaHP,
+                h.SoTinChi,
+                g.HoTen AS TenGV, 
+                g.HocVi,
+                l.ThuHoc,
+                l.TietBatDau,
+                l.SoTiet,
+                l.PhongHoc, 
+                l.SiSoHienTai,
+                l.SiSoToiDa
             FROM LopHocPhan l
             JOIN HocPhan h ON l.MaHP = h.MaHP
             JOIN GiangVien g ON l.MaGV = g.MaGV
             WHERE l.MaHocKy = ? 
               AND l.SiSoHienTai < l.SiSoToiDa
         `;
-        const result = await db.execQuery(sql, [maHK]);
-        return result;
+        return await db.execQuery(sql, [maHK]);
     },
 
 };

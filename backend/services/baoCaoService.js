@@ -22,7 +22,7 @@ async function getThongKeTongQuan() {
  * Thống kê đăng ký từng lớp học phần + tỉ lệ đạt/rớt
  */
 async function getThongKeLop(maHK = null) {
-  const whereHK = maHK ? "WHERE lhp.MaHocKy = @maHK" : "";
+  const whereHK = maHK ? "WHERE lhp.MaHocKy = :" : "";
   return execQuery(`
     SELECT
       lhp.MaLHP,
@@ -51,7 +51,7 @@ async function getThongKeLop(maHK = null) {
  * Ghi thẳng vào response stream
  */
 async function exportBangDiemExcel(res, maSV = null) {
-  const whereClause = maSV ? "WHERE MaSV = @maSV" : "";
+  const whereClause = maSV ? "WHERE MaSV = :" : "";
   const params      = maSV ? { maSV } : {};
 
   const bangDiem = await execQuery(
