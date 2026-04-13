@@ -212,11 +212,12 @@
 
         // Lưu token + thông tin user vào localStorage
         localStorage.setItem("token", data.token);
+        const userData = data.data || {};
         localStorage.setItem("userInfo", JSON.stringify({
-          vaiTro: data.vaiTro,
-          hoTen:  data.hoTen,
-          maSV:   data.maSV || null,
-          maGV:   data.maGV || null,
+          vaiTro: userData.vaiTro,
+          hoTen:  userData.hoTen || null,
+          maSV:   userData.maSV || null,
+          maGV:   userData.maGV || null,
         }));
 
         // Redirect theo vai trò
@@ -225,7 +226,7 @@
           GiangVien:  "/gv/nhap-diem.html",
           SinhVien:   "/sv/dang-ky.html",
         };
-        window.location.href = routes[data.vaiTro] || "/index.html";
+        window.location.href = routes[userData.vaiTro] || "/index.html";
 
       } catch (err) {
         errorDiv.textContent   = err.message || "Đăng nhập thất bại. Vui lòng thử lại.";

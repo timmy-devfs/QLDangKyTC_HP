@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đăng ký học phần – Quản lý ĐKHP</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <style>
+    /* ── Tabs ─────────────────────────────────────── */
+    .tabs {
+      display:       flex;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 20px;
+      gap:           4px;
+    }
+    .tab-btn {
+      padding:       10px 22px;
+      background:    none;
+      border:        none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      cursor:        pointer;
+      font-size:     0.9rem;
+      font-weight:   500;
+      color:         var(--text-muted);
+      transition:    all 0.15s;
+    }
+    .tab-btn:hover  { color: var(--primary); }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── Filter bar ────────────────────────────────── */
+    .filter-bar { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px; }
+    .filter-bar .form-group { margin-bottom:0; }
+
+    /* ── Toast notification ──────────────────────── */
+    #toast {
+      position:      fixed;
+      bottom:        24px;
+      right:         24px;
+      min-width:     300px;
+      max-width:     420px;
+      padding:       14px 18px;
+      border-radius: var(--radius-md);
+      box-shadow:    var(--shadow-md);
+      font-size:     0.9rem;
+      z-index:       9999;
+      display:       none;
+      animation:     slideIn 0.3s ease;
+    }
+    @keyframes slideIn { from { transform:translateX(120%); opacity:0 } to { transform:translateX(0); opacity:1 } }
+    #toast.success { background: var(--success-light); color: var(--success); border-left: 4px solid var(--success); }
+    #toast.error   { background: var(--danger-light);  color: var(--danger);  border-left: 4px solid var(--danger); }
+
+    /* ── Còn chỗ badge ────────────────────────────── */
+    .siso-ok   { color: var(--success); font-weight:600; }
+    .siso-warn { color: var(--warning); font-weight:600; }
+    .siso-full { color: var(--danger);  font-weight:600; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h4>🎓 UTH – ĐKHP</h4>
+      <small id="tenUser">Sinh viên</small>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="/sv/dang-ky.html" class="active"><span class="icon">📝</span> Đăng ký HP</a></li>
+        <li><a href="/sv/ket-qua.html">              <span class="icon">📊</span> Kết quả học tập</a></li>
+        <li><a href="/sv/thoi-khoa-bieu.html">       <span class="icon">🗓️</span> Thời khoá biểu</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="auth.logout()">🚪 Đăng xuất</button>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+    <header class="header">
+      <div class="header-title">📝 Đăng ký học phần</div>
+    </header>
+
+    <main class="content">
+      <h1 class="page-title">📝 Đăng ký học phần tín chỉ</h1>
+
+      <!-- Chọn học kỳ -->
+      <div class="filter-bar" style="margin-bottom:24px">
+        <div class="form-group">
+          <label class="form-label">Học kỳ đăng ký</label>
+          <select id="selHocKy" class="form-control" style="min-width:220px">
+            <option value="">-- Chọn học kỳ --</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="loadAll()">🔍 Tải dữ liệu</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-lop', this)">
+          🏫 Lớp còn chỗ <span id="badgeLop" class="badge badge-primary" style="margin-left:4px"></span>
+        </button>
+        <button class="tab-btn"        onclick="switchTab('tab-daDK', this)">
+          ✅ Đã đăng ký  <span id="badgeDaDK" class="badge badge-success" style="margin-left:4px"></span>
+        </button>
+      </div>
+
+      <!-- ─── Tab 1: Lớp còn chỗ ─── -->
+      <div id="tab-lop" class="tab-pane active">
+        <div class="search-bar">
+          <input type="text" id="searchLop" class="form-control" placeholder="🔎 Tìm theo tên môn, mã lớp..." oninput="filterTable()" />
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrapper">
+              <table class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>Mã lớp</th>
+                    <th>Học phần</th>
+                    <th style="text-align:center">TC</th>
+                    <th>Giảng viên</th>
+                    <th style="text-align:center">Thứ</th>
+                    <th style="text-align:center">Tiết</th>
+                    <th>Phòng</th>
+                    <th style="text-align:center">Sĩ số</th>
+                    <th style="text-align:center">Đăng ký</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyLop">
+                  <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">Chọn học kỳ và nhấn "Tải dữ liệu"</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Tab 2: Đã đăng ký ─── -->
+      <div id="tab-daDK" class="tab-pane">
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrapper">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Mã lớp</th>
+                    <th>Học phần</th>
+                    <th style="text-align:center">TC</th>
+                    <th>Giảng viên</th>
+                    <th style="text-align:center">Thứ</th>
+                    <th style="text-align:center">Tiết</th>
+                    <th>Phòng</th>
+                    <th style="text-align:center">Ngày ĐK</th>
+                    <th style="text-align:center">Hủy</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyDaDK">
+                  <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">Chọn học kỳ và nhấn "Tải dữ liệu"</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer" id="footerTongTC" style="display:none">
+            <strong>Tổng tín chỉ đã đăng ký: <span id="tongTC" class="gpa-high">0</span> TC</strong>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Modal xác nhận hủy -->
+<div id="modalHuy" class="modal-overlay">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h5>⚠️ Xác nhận hủy đăng ký</h5>
+      <button class="modal-close" onclick="closeModal('modalHuy')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Bạn có chắc muốn hủy đăng ký môn <strong id="modalMonHuy"></strong> không?</p>
+      <p style="color:var(--text-muted);font-size:.85rem;margin-top:8px">Sau khi hủy, sĩ số lớp sẽ được tự động cập nhật.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalHuy')">Không</button>
+      <button class="btn btn-danger" id="btnConfirmHuy" onclick="confirmHuy()">Hủy đăng ký</button>
+    </div>
+  </div>
+</div>
+
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/api.js"></script>
+<script>
+// ── Setup ────────────────────────────────────────────────────
+auth.requireAuth(['SinhVien']);
+const maSV = auth.getUser()?.maSV;
+
+let allLop  = [];   // toàn bộ lớp còn chỗ
+let danhSachDK = []; // đã đăng ký
+let pendingHuyMaDK  = null;
+
+// ── Tab control ──────────────────────────────────────────────
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Toast ────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent  = msg;
+  t.className    = type;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 4000);
+}
+
+// ── Modal ────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── Load học kỳ ──────────────────────────────────────────────
+async function loadHocKy() {
+  try {
+    const { data } = await api.get('/hoc-ky');
+    const sel = document.getElementById('selHocKy');
+    // Ưu tiên HK "Đang mở đăng ký"
+    const dsMo = data.filter(hk => hk.TrangThai === 'Đang mở đăng ký');
+    const dsKhac = data.filter(hk => hk.TrangThai !== 'Đang mở đăng ký');
+    [...dsMo, ...dsKhac].forEach(hk => {
+      const opt = document.createElement('option');
+      opt.value = hk.MaHocKy;
+      opt.textContent = `${hk.TenHocKy}${hk.TrangThai === 'Đang mở đăng ký' ? ' 🟢' : ''}`;
+      sel.appendChild(opt);
+    });
+    if (dsMo.length) { sel.value = dsMo[0].MaHocKy; await loadAll(); }
+  } catch (e) { console.error(e); }
+}
+
+// ── Load cả 2 tab ────────────────────────────────────────────
+async function loadAll() {
+  const maHK = document.getElementById('selHocKy').value;
+  if (!maHK) return;
+  await Promise.all([loadLopConCho(maHK), loadDaDangKy(maHK)]);
+}
+
+// ── Tab 1: Lớp còn chỗ ──────────────────────────────────────
+async function loadLopConCho(maHK) {
+  const tbody = document.getElementById('tbodyLop');
+  tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px"><div class="spinner"></div></td></tr>`;
+  try {
+    const { data } = await api.get(`/lop-hoc-phan/dang-ky?maHK=${encodeURIComponent(maHK)}`);
+    allLop = data;
+    document.getElementById('badgeLop').textContent = data.length;
+    renderLop(data);
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--danger)">Lỗi: ${e.message}</td></tr>`;
+  }
+}
+
+function renderLop(data) {
+  const tbody = document.getElementById('tbodyLop');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📭</div><p>Không có lớp nào còn chỗ trong học kỳ này</p></div></td></tr>`;
+    return;
+  }
+
+  // Lấy set mã lớp đã đăng ký để disable nút
+  const daDK = new Set(danhSachDK.map(d => d.MaLHP));
+
+  tbody.innerHTML = data.map(r => {
+    const soConLai = r.SiSoToiDa - r.SiSoHienTai;
+    const sisoClass = soConLai > r.SiSoToiDa * 0.5 ? 'siso-ok'
+                    : soConLai > r.SiSoToiDa * 0.2  ? 'siso-warn'
+                    : 'siso-full';
+    const daDangKy = daDK.has(r.MaLHP);
+
+    return `<tr data-search="${(r.TenHP + r.MaLHP).toLowerCase()}">
+      <td><code>${r.MaLHP}</code></td>
+      <td><strong>${r.TenHP}</strong><br><small style="color:var(--text-muted)">${r.MaHP}</small></td>
+      <td style="text-align:center">${r.SoTinChi}</td>
+      <td>${r.TenGV}<br><small style="color:var(--text-muted)">${r.HocVi || ''}</small></td>
+      <td style="text-align:center">Thứ ${r.ThuHoc}</td>
+      <td style="text-align:center">Tiết ${r.TietBatDau}–${r.TietBatDau + r.SoTiet - 1}</td>
+      <td>${r.PhongHoc || '–'}</td>
+      <td style="text-align:center">
+        <span class="${sisoClass}">${r.SiSoHienTai}/${r.SiSoToiDa}</span><br>
+        <small style="color:var(--text-muted)">Còn ${soConLai}</small>
+      </td>
+      <td style="text-align:center">
+        ${daDangKy
+          ? '<span class="badge badge-success">Đã đăng ký</span>'
+          : `<button class="btn btn-primary btn-sm" onclick="dangKy('${r.MaLHP}', '${r.TenHP}')">+ Đăng ký</button>`}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable() {
+  const q = document.getElementById('searchLop').value.toLowerCase();
+  const filtered = allLop.filter(r =>
+    (r.TenHP + r.MaLHP).toLowerCase().includes(q)
+  );
+  renderLop(filtered);
+}
+
+// ── Tab 2: Đã đăng ký ────────────────────────────────────────
+async function loadDaDangKy(maHK) {
+  const tbody = document.getElementById('tbodyDaDK');
+  tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>`;
+  try {
+    const { data } = await api.get(`/dang-ky?maHK=${encodeURIComponent(maHK)}`);
+    danhSachDK = data;
+    document.getElementById('badgeDaDK').textContent = data.length;
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📋</div><p>Chưa đăng ký môn nào trong học kỳ này</p></div></td></tr>`;
+      document.getElementById('footerTongTC').style.display = 'none';
+      return;
+    }
+
+    const tongTC = data.reduce((s, r) => s + (r.SoTinChi || 0), 0);
+    document.getElementById('tongTC').textContent = tongTC;
+    document.getElementById('footerTongTC').style.display = 'block';
+
+    tbody.innerHTML = data.map(r => {
+      const ngay = r.NgayDangKy
+        ? new Date(r.NgayDangKy).toLocaleDateString('vi-VN')
+        : '–';
+      return `<tr>
+        <td><code>${r.MaLHP}</code></td>
+        <td><strong>${r.TenHP}</strong></td>
+        <td style="text-align:center">${r.SoTinChi}</td>
+        <td>${r.TenGV}</td>
+        <td style="text-align:center">Thứ ${r.ThuHoc}</td>
+        <td style="text-align:center">Tiết ${r.TietBatDau}–${r.TietBatDau + r.SoTiet - 1}</td>
+        <td>${r.PhongHoc || '–'}</td>
+        <td style="text-align:center"><small>${ngay}</small></td>
+        <td style="text-align:center">
+          <button class="btn btn-danger btn-sm"
+            onclick="xacNhanHuy(${r.MaDK}, '${r.TenHP.replace(/'/g,"\\'")}')">
+            🗑 Hủy
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:24px">Lỗi: ${e.message}</td></tr>`;
+  }
+}
+
+// ── Đăng ký ──────────────────────────────────────────────────
+async function dangKy(maLHP, tenHP) {
+  if (!confirm(`Xác nhận đăng ký môn "${tenHP}"?`)) return;
+
+  try {
+    const { message } = await api.post('/dang-ky', { maLHP });
+    showToast(`✅ ${message}`, 'success');
+    // Reload cả 2 tab
+    const maHK = document.getElementById('selHocKy').value;
+    await loadAll();
+  } catch (e) {
+    showToast(`❌ ${e.message}`, 'error');
+  }
+}
+
+// ── Hủy đăng ký ──────────────────────────────────────────────
+function xacNhanHuy(maDK, tenHP) {
+  pendingHuyMaDK = maDK;
+  document.getElementById('modalMonHuy').textContent = tenHP;
+  openModal('modalHuy');
+}
+
+async function confirmHuy() {
+  if (!pendingHuyMaDK) return;
+  closeModal('modalHuy');
+
+  try {
+    await api.del(`/dang-ky/${pendingHuyMaDK}`);
+    showToast('✅ Hủy đăng ký thành công. Sĩ số lớp đã được cập nhật.', 'success');
+    const maHK = document.getElementById('selHocKy').value;
+    await loadAll();
+  } catch (e) {
+    showToast(`❌ ${e.message}`, 'error');
+  } finally {
+    pendingHuyMaDK = null;
+  }
+}
+
+// ── Khởi chạy ────────────────────────────────────────────────
+loadHocKy();
+</script>
+</body>
+</html>

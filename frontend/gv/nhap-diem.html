@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nhập điểm – Quản lý ĐKHP</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <style>
+    /* Input điểm nhỏ gọn trong bảng */
+    .input-diem {
+      width:         68px;
+      padding:       5px 8px;
+      border:        1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size:     0.875rem;
+      text-align:    center;
+      font-family:   var(--font);
+    }
+    .input-diem:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 2px rgba(46,117,182,0.15);
+    }
+    .input-diem.changed { border-color: var(--warning); background: var(--ly, #FFF2CC); }
+
+    /* XepLoai badge */
+    .xl-A { background:#E2F0D9; color:#1E6B3C; }
+    .xl-B { background:#DBEAFE; color:#1e40af; }
+    .xl-C { background:#FFF2CC; color:#854d0e; }
+    .xl-D { background:#EAD1F7; color:#5b21b6; }
+    .xl-F { background:#FFE0E0; color:#C00000; }
+
+    /* Sticky header cho bảng */
+    .table-sticky thead th { position:sticky; top:0; z-index:5; }
+
+    /* Toast */
+    #toast {
+      position:fixed; bottom:24px; right:24px; min-width:300px;
+      padding:14px 18px; border-radius:var(--radius-md); box-shadow:var(--shadow-md);
+      font-size:.9rem; z-index:9999; display:none;
+      animation: slideIn .3s ease;
+    }
+    @keyframes slideIn { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
+    #toast.success { background:var(--success-light); color:var(--success); border-left:4px solid var(--success); }
+    #toast.error   { background:var(--danger-light);  color:var(--danger);  border-left:4px solid var(--danger); }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h4>🎓 UTH – ĐKHP</h4>
+      <small id="tenUser">Giảng viên</small>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="/gv/nhap-diem.html" class="active"><span class="icon">✏️</span> Nhập điểm</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="auth.logout()">🚪 Đăng xuất</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="header">
+      <div class="header-title">✏️ Nhập điểm sinh viên</div>
+    </header>
+
+    <main class="content">
+      <h1 class="page-title">✏️ Nhập điểm sinh viên</h1>
+
+      <!-- Chọn lớp -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h5>📚 Chọn lớp phụ trách</h5></div>
+        <div class="card-body">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Học kỳ</label>
+              <select id="selHocKy" class="form-control" style="min-width:200px" onchange="loadLopCuaGV()">
+                <option value="">-- Tất cả học kỳ --</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Lớp học phần</label>
+              <select id="selLop" class="form-control" style="min-width:280px" onchange="loadSinhVien()">
+                <option value="">-- Chọn lớp --</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bảng nhập điểm -->
+      <div class="card" id="cardDiem" style="display:none">
+        <div class="card-header">
+          <h5 id="headerDiem">📋 Danh sách sinh viên</h5>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="resetBangDiem()">↩ Hoàn tác</button>
+            <button class="btn btn-success" id="btnLuuTatCa" onclick="luuTatCa()">
+              💾 Lưu tất cả điểm
+            </button>
+          </div>
+        </div>
+
+        <!-- Thông báo quan trọng -->
+        <div style="padding:12px 20px;background:#fffbeb;border-bottom:1px solid #fde68a;font-size:.85rem;color:#92400e">
+          ⚠️ <strong>Lưu ý:</strong> Chỉ nhập <strong>Điểm QT</strong> (quá trình, 40%) và <strong>Điểm Thi</strong> (60%).
+          Hệ thống SQL Server sẽ <strong>tự tính</strong> Điểm TK và Xếp loại — không cần tính thủ công.
+        </div>
+
+        <div class="card-body" style="padding:0">
+          <div class="table-wrapper" style="max-height:500px;overflow-y:auto">
+            <table class="table table-striped table-sticky" id="bangDiem">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Mã SV</th>
+                  <th>Họ tên</th>
+                  <th style="text-align:center">Điểm QT<br><small style="font-weight:400;opacity:.8">(0–10, 40%)</small></th>
+                  <th style="text-align:center">Điểm Thi<br><small style="font-weight:400;opacity:.8">(0–10, 60%)</small></th>
+                  <th style="text-align:center">Điểm TK<br><small style="font-weight:400;opacity:.8">(SQL tự tính)</small></th>
+                  <th style="text-align:center">Xếp loại</th>
+                  <th style="text-align:center">Lưu</th>
+                </tr>
+              </thead>
+              <tbody id="tbodySV">
+                <tr><td colspan="8" style="text-align:center;padding:24px">Đang tải...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card-footer" id="footerDiem" style="display:none">
+          <small style="color:var(--text-muted)">
+            🔴 Màu vàng = điểm đã chỉnh sửa chưa lưu &nbsp;|&nbsp;
+            Bấm <strong>Lưu</strong> từng dòng hoặc <strong>Lưu tất cả điểm</strong>
+          </small>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/api.js"></script>
+<script>
+auth.requireAuth(['GiangVien', 'Admin']);
+const maGV = auth.getUser()?.maGV;
+
+let danhSachSV = [];   // cache danh sách SV hiện tại
+
+// ── Toast ────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = type; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3500);
+}
+
+// ── Load học kỳ ──────────────────────────────────────────────
+async function loadHocKy() {
+  try {
+    const { data } = await api.get('/hoc-ky');
+    const sel = document.getElementById('selHocKy');
+    data.forEach(hk => {
+      const opt = document.createElement('option');
+      opt.value = hk.MaHocKy; opt.textContent = hk.TenHocKy;
+      sel.appendChild(opt);
+    });
+    if (data.length) { sel.value = data[0].MaHocKy; await loadLopCuaGV(); }
+  } catch (e) { console.error(e); }
+}
+
+// ── Load lớp GV phụ trách ────────────────────────────────────
+async function loadLopCuaGV() {
+  const maHK = document.getElementById('selHocKy').value;
+  const selLop = document.getElementById('selLop');
+  selLop.innerHTML = '<option value="">-- Chọn lớp --</option>';
+  document.getElementById('cardDiem').style.display = 'none';
+
+  try {
+    const ep = '/diem/lop-gv' + (maHK ? `?maHK=${encodeURIComponent(maHK)}` : '');
+    const { data } = await api.get(ep);
+    data.forEach(lop => {
+      const opt = document.createElement('option');
+      opt.value = lop.MaLHP;
+      opt.textContent = `${lop.MaLHP} – ${lop.TenHP} (${lop.TenHocKy}) [${lop.SiSoHienTai} SV]`;
+      selLop.appendChild(opt);
+    });
+    if (data.length) { selLop.value = data[0].MaLHP; await loadSinhVien(); }
+  } catch (e) {
+    showToast('Lỗi tải danh sách lớp: ' + e.message, 'error');
+  }
+}
+
+// ── Load danh sách SV + điểm hiện tại ────────────────────────
+async function loadSinhVien() {
+  const maLHP = document.getElementById('selLop').value;
+  if (!maLHP) { document.getElementById('cardDiem').style.display = 'none'; return; }
+
+  document.getElementById('cardDiem').style.display = 'block';
+  document.getElementById('headerDiem').textContent = `📋 Danh sách sinh viên – Lớp ${maLHP}`;
+  const tbody = document.getElementById('tbodySV');
+  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>`;
+
+  try {
+    const { data } = await api.get(`/diem/sinh-vien-lop/${encodeURIComponent(maLHP)}`);
+    danhSachSV = data;
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">👤</div><p>Lớp này chưa có sinh viên đăng ký</p></div></td></tr>`;
+      document.getElementById('footerDiem').style.display = 'none';
+      return;
+    }
+
+    document.getElementById('footerDiem').style.display = 'block';
+    renderBangDiem(data);
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:24px">Lỗi: ${e.message}</td></tr>`;
+  }
+}
+
+function renderBangDiem(data) {
+  const tbody = document.getElementById('tbodySV');
+  tbody.innerHTML = data.map((sv, idx) => {
+    const xlClass = sv.XepLoai ? `xl-${sv.XepLoai}` : '';
+    return `
+    <tr id="row-${sv.MaDK}" data-madk="${sv.MaDK}">
+      <td style="text-align:center;color:var(--text-muted)">${idx + 1}</td>
+      <td><code>${sv.MaSV}</code></td>
+      <td><strong>${sv.HoTen}</strong></td>
+      <td style="text-align:center">
+        <input type="number" class="input-diem" id="qt-${sv.MaDK}"
+               value="${sv.DiemQT ?? ''}" min="0" max="10" step="0.1"
+               placeholder="–"
+               onchange="markChanged(${sv.MaDK})" />
+      </td>
+      <td style="text-align:center">
+        <input type="number" class="input-diem" id="thi-${sv.MaDK}"
+               value="${sv.DiemThi ?? ''}" min="0" max="10" step="0.1"
+               placeholder="–"
+               onchange="markChanged(${sv.MaDK})" />
+      </td>
+      <td style="text-align:center" id="tk-${sv.MaDK}">
+        ${sv.DiemTK != null
+          ? `<strong>${Number(sv.DiemTK).toFixed(2)}</strong>`
+          : '<span style="color:var(--text-muted)">–</span>'}
+      </td>
+      <td style="text-align:center" id="xl-${sv.MaDK}">
+        ${sv.XepLoai
+          ? `<span class="badge ${xlClass}">${sv.XepLoai}</span>`
+          : '<span style="color:var(--text-muted)">–</span>'}
+      </td>
+      <td style="text-align:center">
+        <button class="btn btn-primary btn-sm" id="btn-${sv.MaDK}"
+                onclick="luuDiem(${sv.MaDK})">
+          💾 Lưu
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function markChanged(maDK) {
+  document.getElementById(`qt-${maDK}`)?.classList.add('changed');
+  document.getElementById(`thi-${maDK}`)?.classList.add('changed');
+}
+
+function resetBangDiem() {
+  if (!confirm('Hoàn tác tất cả thay đổi chưa lưu?')) return;
+  renderBangDiem(danhSachSV);
+}
+
+// ── Lưu điểm 1 SV ───────────────────────────────────────────
+async function luuDiem(maDK) {
+  const qtEl  = document.getElementById(`qt-${maDK}`);
+  const thiEl = document.getElementById(`thi-${maDK}`);
+  const btn   = document.getElementById(`btn-${maDK}`);
+
+  const diemQT  = qtEl.value  !== '' ? parseFloat(qtEl.value)  : null;
+  const diemThi = thiEl.value !== '' ? parseFloat(thiEl.value) : null;
+
+  if (diemQT === null || diemThi === null) {
+    showToast('Vui lòng nhập đủ cả Điểm QT và Điểm Thi.', 'error');
+    return;
+  }
+  if (diemQT < 0 || diemQT > 10 || diemThi < 0 || diemThi > 10) {
+    showToast('Điểm phải trong khoảng 0–10.', 'error');
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = '⏳';
+
+  try {
+    const { data } = await api.put(`/diem/${maDK}`, { diemQT, diemThi });
+
+    // Cập nhật UI với DiemTK, XepLoai từ server (SQL Server đã tính)
+    const tkEl = document.getElementById(`tk-${maDK}`);
+    const xlEl = document.getElementById(`xl-${maDK}`);
+    const xlC  = data.XepLoai ? `xl-${data.XepLoai}` : '';
+
+    tkEl.innerHTML = data.DiemTK != null
+      ? `<strong>${Number(data.DiemTK).toFixed(2)}</strong>`
+      : '–';
+    xlEl.innerHTML = data.XepLoai
+      ? `<span class="badge ${xlC}">${data.XepLoai}</span>`
+      : '–';
+
+    qtEl.classList.remove('changed');
+    thiEl.classList.remove('changed');
+
+    // Cập nhật cache
+    const idx = danhSachSV.findIndex(s => s.MaDK === maDK);
+    if (idx !== -1) Object.assign(danhSachSV[idx], { DiemQT:diemQT, DiemThi:diemThi, DiemTK:data.DiemTK, XepLoai:data.XepLoai });
+
+    showToast(`✅ Lưu điểm SV thành công. Điểm TK: ${Number(data.DiemTK).toFixed(2)} – Xếp loại: ${data.XepLoai}`, 'success');
+  } catch (e) {
+    showToast(`❌ ${e.message}`, 'error');
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = '💾 Lưu';
+  }
+}
+
+// ── Lưu tất cả ───────────────────────────────────────────────
+async function luuTatCa() {
+  const rows = document.querySelectorAll('#tbodySV tr[data-madk]');
+  let ok = 0, fail = 0;
+
+  const btnTatCa = document.getElementById('btnLuuTatCa');
+  btnTatCa.disabled    = true;
+  btnTatCa.textContent = '⏳ Đang lưu...';
+
+  for (const row of rows) {
+    const maDK = parseInt(row.dataset.madk);
+    const qtEl = document.getElementById(`qt-${maDK}`);
+    const thiEl = document.getElementById(`thi-${maDK}`);
+
+    // Bỏ qua dòng chưa nhập hoặc không thay đổi
+    if (!qtEl || !thiEl) continue;
+    if (!qtEl.classList.contains('changed') && !thiEl.classList.contains('changed')) continue;
+
+    const dq = parseFloat(qtEl.value);
+    const dt = parseFloat(thiEl.value);
+    if (isNaN(dq) || isNaN(dt)) { fail++; continue; }
+
+    try {
+      await api.put(`/diem/${maDK}`, { diemQT: dq, diemThi: dt });
+      qtEl.classList.remove('changed');
+      thiEl.classList.remove('changed');
+      ok++;
+    } catch { fail++; }
+  }
+
+  btnTatCa.disabled    = false;
+  btnTatCa.textContent = '💾 Lưu tất cả điểm';
+
+  if (ok > 0 || fail === 0) {
+    showToast(`✅ Đã lưu ${ok} dòng điểm thành công.${fail ? ` Lỗi: ${fail} dòng.` : ''}`, ok > 0 ? 'success' : 'error');
+    await loadSinhVien(); // reload để lấy DiemTK, XepLoai mới nhất
+  } else {
+    showToast(`❌ Không có dòng nào được lưu.`, 'error');
+  }
+}
+
+// ── Khởi chạy ────────────────────────────────────────────────
+loadHocKy();
+</script>
+</body>
+</html>

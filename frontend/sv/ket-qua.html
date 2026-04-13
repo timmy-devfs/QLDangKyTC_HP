@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kết quả học tập – Quản lý ĐKHP</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <style>
+    .gpa-card {
+      background:    linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color:         #fff;
+      border-radius: var(--radius-lg);
+      padding:       28px 32px;
+      margin-bottom: 24px;
+      display:       grid;
+      grid-template-columns: 1fr auto;
+      gap:           16px;
+      align-items:   center;
+    }
+    .gpa-card h3  { font-size:1rem; opacity:0.85; margin-bottom:6px; }
+    .gpa-value    { font-size:3rem; font-weight:800; line-height:1; }
+    .gpa-tc       { font-size:0.85rem; opacity:0.75; margin-top:4px; }
+    .gpa-badge    { font-size:3rem; }
+
+    .xepLoai-A { color: #1E6B3C; font-weight:700; }
+    .xepLoai-B { color: #2563eb; font-weight:700; }
+    .xepLoai-C { color: #c55a11; font-weight:700; }
+    .xepLoai-D { color: #7030a0; font-weight:700; }
+    .xepLoai-F { color: #c00000; font-weight:700; }
+
+    .hk-section { margin-bottom:28px; }
+    .hk-header  {
+      display:         flex;
+      align-items:     center;
+      justify-content: space-between;
+      padding:         10px 16px;
+      background:      var(--lb, #D6E4F0);
+      border-radius:   var(--radius-sm);
+      margin-bottom:   8px;
+    }
+    .hk-header h6 { font-size:0.95rem; font-weight:700; color:var(--primary); margin:0; }
+    .hk-gpa { font-size:0.85rem; font-weight:600; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h4>🎓 UTH – ĐKHP</h4>
+      <small id="tenUser">Sinh viên</small>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="/sv/dang-ky.html">       <span class="icon">📝</span> Đăng ký HP</a></li>
+        <li><a href="/sv/ket-qua.html" class="active"><span class="icon">📊</span> Kết quả học tập</a></li>
+        <li><a href="/sv/thoi-khoa-bieu.html"><span class="icon">🗓️</span> Thời khoá biểu</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="auth.logout()">🚪 Đăng xuất</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="header">
+      <div class="header-title">📊 Kết quả học tập</div>
+    </header>
+
+    <main class="content">
+      <h1 class="page-title">📊 Kết quả học tập</h1>
+
+      <!-- GPA Tích lũy -->
+      <div class="gpa-card" id="gpaCard">
+        <div>
+          <h3>GPA Tích lũy toàn khóa</h3>
+          <div class="gpa-value" id="gpaTichLuy">–</div>
+          <div class="gpa-tc">Tổng tín chỉ tích lũy: <span id="tongTCTichLuy">–</span> TC</div>
+        </div>
+        <div class="gpa-badge">🎓</div>
+      </div>
+
+      <!-- Filter HK -->
+      <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:20px;flex-wrap:wrap">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Xem theo học kỳ</label>
+          <select id="selHocKy" class="form-control" style="min-width:200px" onchange="filterHK()">
+            <option value="">-- Tất cả học kỳ --</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Bảng điểm theo HK -->
+      <div id="bangDiemContainer">
+        <div style="text-align:center;padding:48px"><div class="spinner"></div></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/api.js"></script>
+<script>
+auth.requireAuth(['SinhVien']);
+const maSV = auth.getUser()?.maSV;
+
+let allBangDiem  = [];
+let allGPAHocKy  = [];
+
+// ── GPA màu sắc ──────────────────────────────────────────────
+function gpaClass(gpa) {
+  if (!gpa && gpa !== 0) return '';
+  return gpa >= 7.0 ? 'gpa-high' : gpa >= 5.0 ? 'gpa-med' : 'gpa-low';
+}
+
+function xepLoaiClass(xl) {
+  return xl ? `xepLoai-${xl}` : '';
+}
+
+// ── Load GPA tích lũy ────────────────────────────────────────
+async function loadGPA() {
+  try {
+    const { data } = await api.get(`/diem/gpa/${maSV}`);
+    const { gpaTichLuy, gpaHocKy } = data;
+    allGPAHocKy = gpaHocKy;
+
+    // Tích lũy
+    const gpa = gpaTichLuy?.GPA_TichLuy;
+    const gpaEl = document.getElementById('gpaTichLuy');
+    gpaEl.textContent = gpa != null ? Number(gpa).toFixed(2) : 'Chưa có';
+
+    // Màu GPA card
+    if (gpa != null) {
+      const card = document.getElementById('gpaCard');
+      if (gpa >= 7.0) card.style.background = 'linear-gradient(135deg, #1E6B3C, #2f9e5c)';
+      else if (gpa >= 5.0) card.style.background = 'linear-gradient(135deg, #C55A11, #e07324)';
+      else card.style.background = 'linear-gradient(135deg, #C00000, #e53935)';
+    }
+
+    document.getElementById('tongTCTichLuy').textContent =
+      gpaTichLuy?.TongTCTichLuy ?? 0;
+
+    // Điền dropdown học kỳ
+    const sel = document.getElementById('selHocKy');
+    const hkSet = [...new Set(allBangDiem.map(r => r.TenHocKy))].sort();
+    hkSet.forEach(hk => {
+      const opt = document.createElement('option');
+      opt.value = hk; opt.textContent = hk;
+      sel.appendChild(opt);
+    });
+
+  } catch (e) {
+    document.getElementById('gpaTichLuy').textContent = 'Lỗi';
+    console.error(e);
+  }
+}
+
+// ── Load bảng điểm ───────────────────────────────────────────
+async function loadBangDiem() {
+  try {
+    const { data } = await api.get(`/diem?maSV=${maSV}`);
+    allBangDiem = data;
+    await loadGPA();
+    renderBangDiem(data);
+  } catch (e) {
+    document.getElementById('bangDiemContainer').innerHTML =
+      `<div class="alert alert-danger">Lỗi tải bảng điểm: ${e.message}</div>`;
+  }
+}
+
+function filterHK() {
+  const hk = document.getElementById('selHocKy').value;
+  const filtered = hk ? allBangDiem.filter(r => r.TenHocKy === hk) : allBangDiem;
+  renderBangDiem(filtered);
+}
+
+function renderBangDiem(data) {
+  const container = document.getElementById('bangDiemContainer');
+
+  if (!data.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>Chưa có dữ liệu điểm</p></div>`;
+    return;
+  }
+
+  // Nhóm theo học kỳ
+  const byHK = {};
+  data.forEach(r => {
+    if (!byHK[r.TenHocKy]) byHK[r.TenHocKy] = [];
+    byHK[r.TenHocKy].push(r);
+  });
+
+  const gpaMap = {};
+  allGPAHocKy.forEach(g => { gpaMap[g.TenHocKy] = g; });
+
+  let html = '';
+  Object.keys(byHK).sort().forEach(hk => {
+    const rows  = byHK[hk];
+    const gData = gpaMap[hk];
+    const tongTC = rows.reduce((s,r) => s + (r.SoTinChi || 0), 0);
+
+    html += `
+      <div class="hk-section">
+        <div class="hk-header">
+          <h6>📅 ${hk} &nbsp;|&nbsp; ${tongTC} tín chỉ</h6>
+          <div class="hk-gpa">
+            GPA học kỳ:
+            <span class="${gpaClass(gData?.GPA_HocKy)}">
+              ${gData?.GPA_HocKy != null ? Number(gData.GPA_HocKy).toFixed(2) : '–'}
+            </span>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Mã HP</th>
+                <th>Tên học phần</th>
+                <th style="text-align:center">TC</th>
+                <th style="text-align:center">Điểm QT</th>
+                <th style="text-align:center">Điểm Thi</th>
+                <th style="text-align:center">Điểm TK</th>
+                <th style="text-align:center">Xếp loại</th>
+                <th style="text-align:center">Tính GPA</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r => `
+                <tr>
+                  <td><code>${r.MaHP}</code></td>
+                  <td>${r.TenHP}</td>
+                  <td style="text-align:center">${r.SoTinChi}</td>
+                  <td style="text-align:center">${r.DiemQT != null ? Number(r.DiemQT).toFixed(1) : '<span style="color:var(--text-muted)">–</span>'}</td>
+                  <td style="text-align:center">${r.DiemThi != null ? Number(r.DiemThi).toFixed(1) : '<span style="color:var(--text-muted)">–</span>'}</td>
+                  <td style="text-align:center;font-weight:700">
+                    ${r.DiemTK != null ? Number(r.DiemTK).toFixed(2) : '<span style="color:var(--text-muted)">–</span>'}
+                  </td>
+                  <td style="text-align:center">
+                    <span class="${xepLoaiClass(r.XepLoai)}">${r.XepLoai || '–'}</span>
+                  </td>
+                  <td style="text-align:center">
+                    ${r.CoTinhGPA ? '<span class="badge badge-success">Có</span>' : '<span class="badge badge-gray">Không</span>'}
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+loadBangDiem();
+</script>
+</body>
+</html>

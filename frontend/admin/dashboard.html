@@ -208,7 +208,8 @@
             document.getElementById("s4").textContent = data.LopDangMo || 0;
 
             // Lấy danh sách học kỳ (Logic File 1)
-            const hkData = await api.get('/hoc-ky');
+            const resHK = await api.get('/hoc-ky');
+            const hkData = resHK.data || resHK;
             const list = document.getElementById('hocKyList');
             const active = Array.isArray(hkData) ? hkData.filter(hk => ['Đang học', 'Đang mở đăng ký'].includes(hk.TrangThai)) : [];
 
