@@ -70,9 +70,7 @@ const lopHocPhanService = {
     },
 
     dongLop: async (MaLHP) => {
-        const sql = "CALL sp_DongLopHocPhan(?)";
-        return await db.execQuery(sql, [MaLHP]);
-    },
+return await db.execSP('sp_DongLopHocPhan', { p_MaLHP: MaLHP });    },
 
     getLHPConChoProc: async (MaHocKy) => {
         const sql = "CALL sp_LayLopConCho(?)";
