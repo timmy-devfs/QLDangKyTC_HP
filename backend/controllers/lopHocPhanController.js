@@ -1,95 +1,82 @@
-const lopHocPhanService = require('../services/lopHocPhanService');
+// backend/controllers/lopHocPhanController.js
+// TV-03  |  Task 2 & Task 6
 
-const lopHocPhanController = {
-    getAllLopHocPhan: async (req, res) => {
-        try {
-            const { maHocKy } = req.query; 
-            const data = await lopHocPhanService.getAll(maHocKy);
-            res.json({ success: true, data });
-        } catch (err) {
-            res.status(500).json({ success: false, error: err.message });
-        }
-    },
-    
-    getLHPByMaHP: async (req, res) => {
-        try {
-            const { maHP } = req.params;
-            const data = await lopHocPhanService.getLHPByMaHP(maHP);
-            res.json({ success: true, data });
-        } catch (err) {
-            res.status(500).json({ success: false, error: err.message });
-        }
-    },
+const svc = require('../services/lopHocPhanService');
 
-    checkLich: async (req, res) => {
-        try {
-            const { maGV, maPhong, thu, tietBatDau, tietKetThuc } = req.body;
-            if (!maGV || !maPhong || !thu || !tietBatDau || !tietKetThuc) {
-                return res.status(400).json({ success: false, message: "Vui long nhap day du thong tin" });
-            }
-            const trungLich = await lopHocPhanService.checkTrungLich(maGV, maPhong, thu, tietBatDau, tietKetThuc);
-            if (trungLich.length > 0) {
-                return res.status(400).json({ success: false, message: "CANH BAO: Trung lich!", data: trungLich });
-            }
-            res.json({ success: true, message: "Lich trong. Co the xep lop." });
-        } catch (err) {
-            res.status(500).json({ success: false, error: err.message });
-        }
-    },
-
-    moLopHocPhan: async (req, res) => {
-        try {
-            const { maLHP, maHK } = req.body; 
-            await lopHocPhanService.moLop(maLHP, maHK);
-            res.json({ success: true, message: "Mở lớp học phần thành công!" });
-        } catch (err) {
-            res.status(500).json({ success: false, error: err.message });
-        }
-    },
-
-    dongLopHocPhan: async (req, res) => {
-        try {
-            const { maLHP } = req.body;
-            await lopHocPhanService.dongLop(maLHP);
-            res.json({ success: true, message: "Đóng lớp học phần thành công!" });
-        } catch (err) {
-            res.status(500).json({ success: false, error: err.message });
-        }
-    },
-
-    getLHPConCho: async (req, res) => {
-        try {
-            const { maHocKy } = req.query; 
-            const data = await lopHocPhanService.getLHPConCho(maHocKy);
-            res.json({ success: true, data: data });
-        } catch (err) {
-            res.status(500).json({ success: false, error: err.message });
-        }
-    },
-
-    createLHP: async (req, res) => {
-        try {
-            const result = await lopHocPhanService.createLHP(req.body);
-            res.json({ success: true, data: result });
-        } catch (error) {
-            res.status(500).json({ success: false, error: error.message });
-        }
-    },
-
-    getLHPDangKy: async (req, res) => {
-        try {
-            const { maHK } = req.query; // Lấy từ link ?maHK=...
-            
-            if (!maHK) {
-                return res.status(400).json({ success: false, message: "Thiếu mã học kỳ (maHK)" });
-            }
-
-            const data = await lopHocPhanService.getLHPDangKy(maHK); // Gọi service xử lý
-            res.json({ success: true, data });
-        } catch (err) {
-            res.status(500).json({ success: false, error: err.message });
-        }
-    }
+const handleErr = (err, res, next) => {
+  if (err.status) return res.status(err.status).json({ success: false, message: err.message });
+  // Lỗi THROW từ SP SQL Server
+  if (err.message?.includes('trùng lịch') || err.message?.includes('đã có lớp')) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+  next(err);
 };
 
-module.exports = lopHocPhanController;
+// GET /api/lop-hoc-phan?page=&limit=&maHK=&maHP=&trangThai=
+exports.getDanhSach = async (req, res, next) => {
+  try {
+    const result = await svc.getDanhSach(req.query);
+    res.json({ success: true, ...result });
+  } catch (err) { next(err); }
+};
+
+// GET /api/lop-hoc-phan/dang-ky?maHK=   ← TASK 6 – dành cho SV
+// ROUTE NÀY ĐẶT TRƯỚC /:maLHP trong routes để không bị match nhầm
+exports.getLopConCho = async (req, res, next) => {
+  try {
+    const { maHK } = req.query;
+    if (!maHK) return res.status(400).json({ success: false, message: 'Thiếu maHK.' });
+    const data = await svc.getLopConCho(maHK);
+    res.json({ success: true, data });
+  } catch (err) { handleErr(err, res, next); }
+};
+
+// GET /api/lop-hoc-phan/:maLHP
+exports.getChiTiet = async (req, res, next) => {
+  try {
+    const data = await svc.getChiTiet(req.params.maLHP);
+    res.json({ success: true, data });
+  } catch (err) { handleErr(err, res, next); }
+};
+
+// POST /api/lop-hoc-phan
+exports.themMoi = async (req, res, next) => {
+  try {
+    const data = await svc.themMoi(req.body);
+    res.status(201).json({ success: true, message: 'Tạo lớp học phần thành công.', data });
+  } catch (err) { handleErr(err, res, next); }
+};
+
+// PUT /api/lop-hoc-phan/:maLHP
+exports.capNhat = async (req, res, next) => {
+  try {
+    const data = await svc.capNhat(req.params.maLHP, req.body);
+    res.json({ success: true, message: 'Cập nhật lớp học phần thành công.', data });
+  } catch (err) { handleErr(err, res, next); }
+};
+
+// DELETE /api/lop-hoc-phan/:maLHP
+exports.xoa = async (req, res, next) => {
+  try {
+    const result = await svc.xoa(req.params.maLHP);
+    res.json({ success: true, message: result.message });
+  } catch (err) { handleErr(err, res, next); }
+};
+
+// POST /api/lop-hoc-phan/:maLHP/mo   body: { maHK }
+exports.moLop = async (req, res, next) => {
+  try {
+    const { maHK } = req.body;
+    if (!maHK) return res.status(400).json({ success: false, message: 'Thiếu maHK.' });
+    const result = await svc.moLop(req.params.maLHP, maHK);
+    res.json({ success: true, message: result?.ThongBao || 'Mở lớp thành công.', data: result });
+  } catch (err) { handleErr(err, res, next); }
+};
+
+// POST /api/lop-hoc-phan/:maLHP/dong
+exports.dongLop = async (req, res, next) => {
+  try {
+    const result = await svc.dongLop(req.params.maLHP);
+    res.json({ success: true, message: result?.ThongBao || 'Đóng lớp thành công.', data: result });
+  } catch (err) { handleErr(err, res, next); }
+};

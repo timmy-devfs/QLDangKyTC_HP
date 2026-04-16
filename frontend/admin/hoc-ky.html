@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,251 +9,520 @@
     <link rel="stylesheet" href="/assets/css/components.css">
     <style>
         /* ===== TÁI SỬ DỤNG LAYOUT DASHBOARD ===== */
-        .layout { display: flex; min-height: 100vh; }
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
         .sidebar {
-            width: 250px; flex-shrink: 0;
-            background: var(--color-secondary);
-            display: flex; flex-direction: column;
-            box-shadow: 2px 0 8px rgba(0,0,0,.2);
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--primary);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, .2);
         }
-        .sidebar-brand { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .sidebar-brand h2 { color: #fff; font-size: 15px; font-weight: 700; line-height: 1.4; }
-        .sidebar-brand span { color: #a8c7e8; font-size: 12px; }
-        .sidebar-nav { flex: 1; padding: 16px 0; }
+
+        .sidebar-brand {
+            padding: 24px 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-brand h2 {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .sidebar-brand span {
+            color: #a8c7e8;
+            font-size: 12px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 0;
+        }
+
         .nav-section {
-            padding: 8px 20px 4px; font-size: 10px; font-weight: 700; 
-            color: rgba(255,255,255,0.4); text-transform: uppercase;
+            padding: 8px 20px 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
         }
+
         .nav-item {
-            display: flex; align-items: center; gap: 10px; padding: 11px 20px;
-            color: rgba(255,255,255,0.75); text-decoration: none; font-size: 14px; 
-            transition: all .15s; border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 20px;
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all .15s;
+            border-left: 3px solid transparent;
         }
-        .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
-        .nav-item.active { background: rgba(46,117,182,0.4); color: #fff; border-left-color: var(--color-primary); }
-        
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background-color: #f8fafc; }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: rgba(46, 117, 182, 0.4);
+            color: #fff;
+            border-left-color: var(--color-primary);
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: #f8fafc;
+        }
+
         .topbar {
-            background: #fff; padding: 16px 28px; display: flex; align-items: center; 
-            justify-content: space-between; border-bottom: 1px solid #e2e8f0;
+            background: #fff;
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .topbar h1 { font-size: 18px; color: var(--color-secondary); font-weight: 700; margin: 0; }
-        .user-profile { display: flex; align-items: center; gap: 12px; }
-        .avatar { 
-            width: 35px; height: 35px; background: var(--color-primary); 
-            color: white; border-radius: 50%; display: flex; 
-            align-items: center; justify-content: center; font-weight: bold;
+
+        .topbar h1 {
+            font-size: 18px;
+            color: var(--color-secondary);
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 35px;
+            height: 35px;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
 
         /* ===== PAGE SPECIFIC ===== */
-        .content-body { padding: 28px; overflow-y: auto; flex: 1; }
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .card { background: #fff; border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
-        
+        .content-body {
+            padding: 28px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
         /* Table Styles */
-        .table-wrapper { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 14px 20px; text-align: left; border-bottom: 1px solid #f1f5f9; }
-        th { background: #f8fafc; font-weight: 600; font-size: 13px; color: #64748b; text-transform: uppercase; }
-        td { font-size: 14px; color: #334155; vertical-align: middle; }
-        tr:hover td { background: #f8fafc; }
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 14px 20px;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            font-size: 13px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        td {
+            font-size: 14px;
+            color: #334155;
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
 
         /* Badge Status */
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .badge.st-đangmởđăngký { background: #dcfce7; color: #166534; }
-        .badge.st-đãđóng { background: #f1f5f9; color: #64748b; }
-        .badge.st-đanghọc { background: #dbeafe; color: #1e40af; }
-        
-        .status-select { padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; }
-        .btn-update { background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;}
-        .btn-update:hover { background: #2563eb; }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.st-đangmởđăngký {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge.st-đãđóng {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .badge.st-đanghọc {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-select {
+            padding: 6px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .btn-update {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn-update:hover {
+            background: #2563eb;
+        }
 
         /* Modal Form CSS */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
-            z-index: 1000; opacity: 0; transition: opacity 0.2s;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        .modal-overlay.open { display: flex; opacity: 1; }
-        .modal {
-            background: white; border-radius: 10px; width: 100%; max-width: 600px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: translateY(-20px); transition: transform 0.2s;
-            overflow: hidden; max-height: 90vh; display: flex; flex-direction: column;
-        }
-        .modal-overlay.open .modal { transform: translateY(0); }
-        .modal-header { padding: 20px 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h3 { margin: 0; font-size: 18px; color: #1e293b; }
-        .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; }
-        
-        /* Form 2 cột */
-        .modal-body { padding: 24px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .modal-footer { padding: 16px 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 12px; }
 
-        .form-group { margin-bottom: 0; }
-        .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; }
-        .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
-        .form-control:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(46,117,182,0.1); }
+        .modal-overlay.open {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(-20px);
+            transition: transform 0.2s;
+            overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-overlay.open .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #1e293b;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+
+        /* Form 2 cột */
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            background: #f8fafc;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(46, 117, 182, 0.1);
+        }
 
         /* Toast */
         #toast {
-            position:fixed; bottom:24px; right:24px; min-width:300px;
-            padding:14px 18px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15);
-            font-size:14px; z-index:9999; display:none; color: white;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            min-width: 300px;
+            padding: 14px 18px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 14px;
+            z-index: 9999;
+            display: none;
+            color: white;
             animation: slideIn .3s ease;
         }
-        @keyframes slideIn { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
-        #toast.success { background: #10b981; }
-        #toast.error   { background: #ef4444; }
-    </style>
-</head>
-<body>
-<div class="layout">
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <h2>🎓 UTH – ĐKHP</h2>
-            <span>Quản trị hệ thống</span>
-        </div>
-        <nav class="sidebar-nav">
-            <div class="nav-section">Tổng quan</div>
-            <a href="/admin/dashboard.html" class="nav-item">📊 Dashboard</a>
-            
-            <div class="nav-section">Quản lý dữ liệu</div>
-            <a href="/admin/sinh-vien.html" class="nav-item">👩‍🎓 Sinh viên</a>
-            <a href="/admin/giang-vien.html" class="nav-item">👨‍🏫 Giảng viên</a>
-            <a href="/admin/hoc-phan.html" class="nav-item">📚 Học phần</a>
-            <a href="/admin/lop-hoc-phan.html" class="nav-item">🏫 Lớp học phần</a>
-            <a href="/admin/hoc-ky.html" class="nav-item active">📅 Học kỳ</a>
-            
-            <div class="nav-section">Báo cáo</div>
-            <a href="/admin/bao-cao.html" class="nav-item">📈 Thống kê & Báo cáo</a>
-        </nav>
-        <div class="sidebar-footer" style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <button class="btn-logout" onclick="auth.logout()" style="width:100%; padding: 10px; background: #c00000; border:none; color:white; border-radius:5px; cursor:pointer;">🚪 Đăng xuất</button>
-        </div>
-    </aside>
 
-    <div class="main">
-        <header class="topbar">
-            <h1>📅 Quản lý Học kỳ</h1>
-            <div class="user-profile">
-                <div class="avatar">A</div>
-                <span id="tenUser" style="font-weight: 600; color: #1e293b;">Admin</span>
-            </div>
-        </header>
-
-        <div class="content-body">
-            <div class="page-header">
-                <div>
-                    <h2 style="margin: 0; font-size: 20px; color: #0f172a;">Danh sách Học kỳ</h2>
-                    <p style="margin: 4px 0 0; color: #64748b; font-size: 14px;">Quản lý thời gian và trạng thái đăng ký của các học kỳ</p>
-                </div>
-                <button class="btn btn-primary" onclick="openModal()" style="padding: 10px 16px; border-radius: 6px; font-weight: 600;">
-                    + Tạo Học kỳ mới
-                </button>
-            </div>
-
-            <div class="card">
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Mã HK</th>
-                                <th>Tên Học kỳ</th>
-                                <th>Năm Học</th>
-                                <th>Thời gian Đăng ký</th>
-                                <th>Trạng thái</th>
-                                <th>Cập nhật trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dataTable">
-                            <tr><td colspan="6" style="text-align:center; padding: 30px;">Đang tải dữ liệu...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Form -->
-<div id="hkModal" class="modal-overlay">
-    <div class="modal">
-        <div class="modal-header">
-            <h3>Tạo Học kỳ mới</h3>
-            <button class="btn-close" onclick="closeModal()">✕</button>
-        </div>
-        <form id="hkForm" onsubmit="saveHocKy(event)">
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Mã Học kỳ</label>
-                    <input type="text" id="txtMaHK" class="form-control" required placeholder="VD: HK1-2023">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Tên Học kỳ</label>
-                    <input type="text" id="txtTenHK" class="form-control" required placeholder="VD: Học kỳ 1">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Năm học</label>
-                    <input type="text" id="txtNamHoc" class="form-control" required placeholder="VD: 2023-2024">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Học kỳ số</label>
-                    <input type="number" id="txtHKSo" class="form-control" required placeholder="VD: 1" min="1" max="10">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Ngày bắt đầu đăng ký</label>
-                    <input type="date" id="txtBatDau" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Ngày kết thúc đăng ký</label>
-                    <input type="date" id="txtKetThuc" class="form-control" required>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <span style="font-size: 13px; color: #64748b; margin-right: auto; line-height: 36px;">Mặc định trạng thái là "Đã đóng"</span>
-                <button type="button" class="btn" style="background:#e2e8f0; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;" onclick="closeModal()">Hủy</button>
-                <button type="submit" class="btn btn-primary" style="padding:8px 16px; border-radius:6px;">Tạo mới</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div id="toast"></div>
-
-<script src="/assets/js/auth.js"></script>
-<script src="/assets/js/api.js"></script>
-<script>
-    auth.requireAuth(["Admin"]);
-    document.getElementById("tenUser").textContent = auth.getUser()?.hoTen || "Admin";
-
-    function showToast(msg, type = 'success') {
-        const t = document.getElementById('toast');
-        t.textContent = msg; t.className = type; t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 3000);
-    }
-
-    // Helper chuẩn hóa class
-    function getStatusClass(status) {
-        if (!status) return 'st-đãđóng';
-        return 'st-' + status.toLowerCase().replace(/\s+/g, '');
-    }
-
-    async function loadData() {
-        try {
-            const res = await api.get('/hoc-ky');
-            const data = (res.data || res); // Backend trả về trực tiếp rows
-            const tbody = document.getElementById('dataTable');
-            
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Chưa có học kỳ nào</td></tr>';
-                return;
+        @keyframes slideIn {
+            from {
+                transform: translateX(120%);
+                opacity: 0
             }
 
-            tbody.innerHTML = data.map(db => {
-                const bd = db.NgayBatDauDK ? new Date(db.NgayBatDauDK).toLocaleDateString('vi-VN') : '—';
-                const kt = db.NgayKetThucDK ? new Date(db.NgayKetThucDK).toLocaleDateString('vi-VN') : '—';
-                
-                return `
+            to {
+                transform: translateX(0);
+                opacity: 1
+            }
+        }
+
+        #toast.success {
+            background: #10b981;
+        }
+
+        #toast.error {
+            background: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🎓 UTH – ĐKHP</h2>
+                <span>Quản trị hệ thống</span>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">Tổng quan</div>
+                <a href="/admin/dashboard.html" class="nav-item">📊 Dashboard</a>
+
+                <div class="nav-section">Quản lý dữ liệu</div>
+                <a href="/admin/sinh-vien.html" class="nav-item">👩‍🎓 Sinh viên</a>
+                <a href="/admin/giang-vien.html" class="nav-item">👨‍🏫 Giảng viên</a>
+                <a href="/admin/hoc-phan.html" class="nav-item">📚 Học phần</a>
+                <a href="/admin/lop-hoc-phan.html" class="nav-item">🏫 Lớp học phần</a>
+                <a href="/admin/hoc-ky.html" class="nav-item active">📅 Học kỳ</a>
+
+                <div class="nav-section">Báo cáo</div>
+                <a href="/admin/bao-cao.html" class="nav-item">📈 Thống kê & Báo cáo</a>
+            </nav>
+            <div class="sidebar-footer" style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <button class="btn-logout" onclick="auth.logout()"
+                    style="width:100%; padding: 10px; background: #c00000; border:none; color:white; border-radius:5px; cursor:pointer;">🚪
+                    Đăng xuất</button>
+            </div>
+        </aside>
+
+        <div class="main">
+            <header class="topbar">
+                <h1>📅 Quản lý Học kỳ</h1>
+                <div class="user-profile">
+                    <div class="avatar">A</div>
+                    <span id="tenUser" style="font-weight: 600; color: #1e293b;">Admin</span>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <div class="page-header">
+                    <div>
+                        <h2 style="margin: 0; font-size: 20px; color: #0f172a;">Danh sách Học kỳ</h2>
+                        <p style="margin: 4px 0 0; color: #64748b; font-size: 14px;">Quản lý thời gian và trạng thái
+                            đăng ký của các học kỳ</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal()"
+                        style="padding: 10px 16px; border-radius: 6px; font-weight: 600;">
+                        + Tạo Học kỳ mới
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Mã HK</th>
+                                    <th>Tên Học kỳ</th>
+                                    <th>Năm Học</th>
+                                    <th>Thời gian Đăng ký</th>
+                                    <th>Trạng thái</th>
+                                    <th>Cập nhật trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTable">
+                                <tr>
+                                    <td colspan="6" style="text-align:center; padding: 30px;">Đang tải dữ liệu...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="hkModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Tạo Học kỳ mới</h3>
+                <button class="btn-close" onclick="closeModal()">✕</button>
+            </div>
+            <form id="hkForm" onsubmit="saveHocKy(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Mã Học kỳ</label>
+                        <input type="text" id="txtMaHK" class="form-control" required placeholder="VD: HK1-2023">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tên Học kỳ</label>
+                        <input type="text" id="txtTenHK" class="form-control" required placeholder="VD: Học kỳ 1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Năm học</label>
+                        <input type="text" id="txtNamHoc" class="form-control" required placeholder="VD: 2023-2024">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Học kỳ số</label>
+                        <input type="number" id="txtHKSo" class="form-control" required placeholder="VD: 1" min="1"
+                            max="10">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ngày bắt đầu đăng ký</label>
+                        <input type="date" id="txtBatDau" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ngày kết thúc đăng ký</label>
+                        <input type="date" id="txtKetThuc" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span style="font-size: 13px; color: #64748b; margin-right: auto; line-height: 36px;">Mặc định trạng
+                        thái là "Đã đóng"</span>
+                    <button type="button" class="btn"
+                        style="background:#e2e8f0; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;"
+                        onclick="closeModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary" style="padding:8px 16px; border-radius:6px;">Tạo
+                        mới</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script src="/assets/js/auth.js"></script>
+    <script src="/assets/js/api.js"></script>
+    <script>
+        auth.requireAuth(["Admin"]);
+        document.getElementById("tenUser").textContent = auth.getUser()?.hoTen || "Admin";
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.className = type; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        // Helper chuẩn hóa class
+        function getStatusClass(status) {
+            if (!status) return 'st-đãđóng';
+            return 'st-' + status.toLowerCase().replace(/\s+/g, '');
+        }
+
+        async function loadData() {
+            try {
+                const res = await api.get('/hoc-ky');
+                const data = (res.data || res); // Backend trả về trực tiếp rows
+                const tbody = document.getElementById('dataTable');
+
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Chưa có học kỳ nào</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.map(db => {
+                    const bd = db.NgayBatDauDK ? new Date(db.NgayBatDauDK).toLocaleDateString('vi-VN') : '—';
+                    const kt = db.NgayKetThucDK ? new Date(db.NgayKetThucDK).toLocaleDateString('vi-VN') : '—';
+
+                    return `
                 <tr>
                     <td style="font-weight:600; color:var(--color-primary);">${db.MaHocKy}</td>
                     <td style="font-weight:600;">${db.TenHocKy}</td>
@@ -276,57 +546,58 @@
                     </td>
                 </tr>
             `}).join('');
-        } catch (e) {
-            showToast('Lỗi tải dữ liệu: ' + e.message, 'error');
+            } catch (e) {
+                showToast('Lỗi tải dữ liệu: ' + e.message, 'error');
+            }
         }
-    }
 
-    function openModal() {
-        document.getElementById('hkModal').classList.add('open');
-    }
-
-    function closeModal() {
-        document.getElementById('hkModal').classList.remove('open');
-        document.getElementById('hkForm').reset();
-    }
-
-    async function saveHocKy(e) {
-        e.preventDefault();
-        
-        const payload = {
-            MaHocKy: document.getElementById('txtMaHK').value,
-            TenHocKy: document.getElementById('txtTenHK').value,
-            NamHoc: document.getElementById('txtNamHoc').value,
-            HocKySo: document.getElementById('txtHKSo').value,
-            NgayBatDauDK: document.getElementById('txtBatDau').value,
-            NgayKetThucDK: document.getElementById('txtKetThuc').value
-        };
-
-        try {
-            await api.post('/hoc-ky', payload);
-            showToast('Đã tạo học kỳ thành công');
-            closeModal();
-            loadData();
-        } catch (err) {
-            showToast('Lỗi: ' + err.message, 'error');
+        function openModal() {
+            document.getElementById('hkModal').classList.add('open');
         }
-    }
 
-    async function updateStatus(maHocKy) {
-        const targetStatus = document.getElementById(`selStatus-${maHocKy}`).value;
-        try {
-            await api.put(`/hoc-ky/${maHocKy}`, { targetStatus });
-            showToast(`Cập nhật trạng thái thành: ${targetStatus}`, 'success');
-            loadData();
-        } catch (err) {
-            // Lỗi ở đây thường là: Đã có học kỳ đang mở ĐK
-            showToast('' + err.message, 'error');
-            loadData(); // reload để trả lại select
+        function closeModal() {
+            document.getElementById('hkModal').classList.remove('open');
+            document.getElementById('hkForm').reset();
         }
-    }
 
-    // Init
-    loadData();
-</script>
+        async function saveHocKy(e) {
+            e.preventDefault();
+
+            const payload = {
+                MaHocKy: document.getElementById('txtMaHK').value,
+                TenHocKy: document.getElementById('txtTenHK').value,
+                NamHoc: document.getElementById('txtNamHoc').value,
+                HocKySo: document.getElementById('txtHKSo').value,
+                NgayBatDauDK: document.getElementById('txtBatDau').value,
+                NgayKetThucDK: document.getElementById('txtKetThuc').value
+            };
+
+            try {
+                await api.post('/hoc-ky', payload);
+                showToast('Đã tạo học kỳ thành công');
+                closeModal();
+                loadData();
+            } catch (err) {
+                showToast('Lỗi: ' + err.message, 'error');
+            }
+        }
+
+        async function updateStatus(maHocKy) {
+            const targetStatus = document.getElementById(`selStatus-${maHocKy}`).value;
+            try {
+                await api.put(`/hoc-ky/${maHocKy}`, { targetStatus });
+                showToast(`Cập nhật trạng thái thành: ${targetStatus}`, 'success');
+                loadData();
+            } catch (err) {
+                // Lỗi ở đây thường là: Đã có học kỳ đang mở ĐK
+                showToast('' + err.message, 'error');
+                loadData(); // reload để trả lại select
+            }
+        }
+
+        // Init
+        loadData();
+    </script>
 </body>
+
 </html>

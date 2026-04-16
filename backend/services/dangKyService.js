@@ -1,4 +1,4 @@
-﻿// backend/services/dangKyService.js
+// backend/services/dangKyService.js
 // TV-04  |  Task 1 (POST đăng ký – 4 ràng buộc) & Task 2 (DELETE hủy)
 //
 // Lưu ý quan trọng:
@@ -23,7 +23,7 @@ async function kiemTra4DieuKien(maSV, maLHP) {
      FROM LopHocPhan lhp
      JOIN HocKy   hk ON lhp.MaHocKy = hk.MaHocKy
      JOIN HocPhan hp ON lhp.MaHP    = hp.MaHP
-     WHERE lhp.MaLHP = :`,
+     WHERE lhp.MaLHP = :maLHP`,
     { maLHP }
   );
   const lhp = rows[0];
@@ -58,12 +58,12 @@ async function kiemTra4DieuKien(maSV, maLHP) {
      FROM   DangKyHocPhan dk
      JOIN   LopHocPhan    lhp2 ON dk.MaLHP  = lhp2.MaLHP
      JOIN   HocPhan       hp2  ON lhp2.MaHP = hp2.MaHP
-     WHERE  dk.MaSV         = :
+     WHERE  dk.MaSV         = :maSV
        AND  dk.TrangThai     = N'Đã đăng ký'
-       AND  lhp2.MaHocKy    = :
-       AND  lhp2.ThuHoc     = :
-       AND  lhp2.TietBatDau <= :
-       AND  (lhp2.TietBatDau + lhp2.SoTiet - 1) >= :`,
+       AND  lhp2.MaHocKy    = :maHK
+       AND  lhp2.ThuHoc     = :thu
+       AND  lhp2.TietBatDau <= :tietKetThuc
+       AND  (lhp2.TietBatDau + lhp2.SoTiet - 1) >= :tietBatDau`,
     {
       maSV,
       maHK:        lhp.MaHocKy,
@@ -90,14 +90,14 @@ async function kiemTra4DieuKien(maSV, maLHP) {
     `SELECT dk2.MaHPTruoc, hp3.TenHP AS TenHPTruoc
      FROM   DieuKienHP dk2
      JOIN   HocPhan    hp3 ON dk2.MaHPTruoc = hp3.MaHP
-     WHERE  dk2.MaHP    = :
+     WHERE  dk2.MaHP    = :maHP
        AND  dk2.LoaiDK  = 'b'
        AND  dk2.MaHPTruoc NOT IN (
            SELECT lhp3.MaHP
            FROM   DangKyHocPhan dkh
            JOIN   LopHocPhan    lhp3 ON dkh.MaLHP = lhp3.MaLHP
            JOIN   Diem          d    ON dkh.MaDK   = d.MaDK
-           WHERE  dkh.MaSV   = :
+           WHERE  dkh.MaSV   = :maSV
              AND  d.DiemTK   >= 4.0
              AND  dkh.TrangThai = N'Đã đăng ký'
        )`,
@@ -125,16 +125,16 @@ async function dangKy(maSV, maLHP) {
   // INSERT → Trigger INSTEAD OF kiểm tra lần cuối → Trigger AFTER tăng sĩ số
   await execQuery(
     `INSERT INTO DangKyHocPhan (MaSV, MaLHP, NgayDangKy, TrangThai)
-     VALUES (:, :, GETDATE(), N'Đã đăng ký')`,
+     VALUES (:maSV, :maLHP, NOW(), N'Đã đăng ký')`,
     { maSV, maLHP }
   );
 
   // Lấy MaDK vừa tạo để trả về client
   const newRows = await execQuery(
-    `SELECT TOP 1 MaDK, NgayDangKy
+    `SELECT MaDK, NgayDangKy
      FROM DangKyHocPhan
-     WHERE MaSV = : AND MaLHP = :
-     ORDER BY MaDK DESC`,
+     WHERE MaSV = :maSV AND MaLHP = :maLHP
+     ORDER BY MaDK DESC LIMIT 1`,
     { maSV, maLHP }
   );
 
@@ -160,8 +160,8 @@ async function getDanhSachDangKy(maSV, maHK) {
      JOIN   LopHocPhan    lhp ON dk.MaLHP  = lhp.MaLHP
      JOIN   HocPhan       hp  ON lhp.MaHP  = hp.MaHP
      JOIN   GiangVien     gv  ON lhp.MaGV  = gv.MaGV
-     WHERE  dk.MaSV     = :
-       AND  lhp.MaHocKy = :
+     WHERE  dk.MaSV     = :maSV
+       AND  lhp.MaHocKy = :maHK
        AND  dk.TrangThai = N'Đã đăng ký'
      ORDER  BY hp.TenHP`,
     { maSV, maHK }
@@ -179,7 +179,7 @@ async function huyDangKy(maDK, maSV) {
      FROM   DangKyHocPhan dk
      JOIN   LopHocPhan    lhp ON dk.MaLHP  = lhp.MaLHP
      JOIN   HocKy         hk  ON lhp.MaHocKy = hk.MaHocKy
-     WHERE  dk.MaDK = : AND dk.MaSV = :`,
+     WHERE  dk.MaDK = :maDK AND dk.MaSV = :maSV`,
     { maDK, maSV }
   );
 
@@ -214,7 +214,7 @@ async function huyDangKy(maDK, maSV) {
   // Cách đơn giản nhất: UPDATE TrangThai = 'Đã hủy' → NHƯNG trigger AFTER INSERT/DELETE không cover UPDATE
   // → Dùng cách DELETE thật sự để trigger AFTER DELETE chạy giảm sĩ số
   await execQuery(
-    `DELETE FROM DangKyHocPhan WHERE MaDK = :`,
+    `DELETE FROM DangKyHocPhan WHERE MaDK = :maDK`,
     { maDK }
   );
 

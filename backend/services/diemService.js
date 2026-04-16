@@ -12,7 +12,7 @@ const { execQuery } = require('../config/db');
 // TASK 3 – Xem bảng điểm của 1 SV theo học kỳ
 // ─────────────────────────────────────────────────────────────────────────────
 async function getBangDiem(maSV, maHK = null) {
-  const whereHK = maHK ? 'AND hk.MaHocKy = :' : '';
+  const whereHK = maHK ? 'AND hk.MaHocKy = :maHK' : '';
   return execQuery(
     `SELECT
        v.MaSV, v.TenSV, v.MaHP, v.TenHP, v.SoTinChi,
@@ -23,7 +23,7 @@ async function getBangDiem(maSV, maHK = null) {
        v.CoTinhGPA
      FROM V_BangDiemSinhVien v
      JOIN HocKy hk ON v.TenHocKy = hk.TenHocKy
-     WHERE v.MaSV = : ${whereHK}
+     WHERE v.MaSV = :maSV ${whereHK}
      ORDER BY v.TenHocKy, v.TenHP`,
     { maSV, ...(maHK && { maHK }) }
   );
@@ -44,7 +44,7 @@ async function nhapDiem(maDK, diemQT, diemThi) {
 
   // Kiểm tra MaDK tồn tại
   const check = await execQuery(
-    `SELECT MaDK FROM DangKyHocPhan WHERE MaDK = : AND TrangThai = N'Đã đăng ký'`,
+    `SELECT MaDK FROM DangKyHocPhan WHERE MaDK = :maDK AND TrangThai = N'Đã đăng ký'`,
     { maDK }
   );
   if (!check.length) {
@@ -57,21 +57,16 @@ async function nhapDiem(maDK, diemQT, diemThi) {
   // UPSERT – chỉ INSERT/UPDATE DiemQT và DiemThi
   // DiemTK, XepLoai do SQL Server tự tính (PERSISTED COMPUTED COLUMN)
   await execQuery(
-    `IF EXISTS (SELECT 1 FROM Diem WHERE MaDK = :)
-       UPDATE Diem
-       SET    DiemQT  = :,
-              DiemThi = :
-       WHERE  MaDK = :
-     ELSE
-       INSERT INTO Diem (MaDK, DiemQT, DiemThi)
-       VALUES (:, :, :)`,
+    `INSERT INTO Diem (MaDK, DiemQT, DiemThi)
+     VALUES (:maDK, :dq, :dt)
+     ON DUPLICATE KEY UPDATE DiemQT = VALUES(DiemQT), DiemThi = VALUES(DiemThi)`,
     { maDK, dq: diemQT, dt: diemThi }
   );
 
   // Trả về bản ghi vừa cập nhật (có DiemTK, XepLoai đã tính)
   const result = await execQuery(
     `SELECT MaDiem, MaDK, DiemQT, DiemThi, DiemTK, XepLoai
-     FROM   Diem WHERE MaDK = :`,
+     FROM   Diem WHERE MaDK = :maDK`,
     { maDK }
   );
   return result[0];
@@ -81,7 +76,7 @@ async function nhapDiem(maDK, diemQT, diemThi) {
  * Lấy danh sách lớp GV phụ trách + danh sách SV + điểm (cho trang nhap-diem.html)
  */
 async function getLopCuaGV(maGV, maHK = null) {
-  const whereHK = maHK ? 'AND lhp.MaHocKy = :' : '';
+  const whereHK = maHK ? 'AND lhp.MaHocKy = :maHK' : '';
   return execQuery(
     `SELECT
        lhp.MaLHP, hp.MaHP, hp.TenHP, hp.SoTinChi,
@@ -90,7 +85,7 @@ async function getLopCuaGV(maGV, maHK = null) {
      FROM   LopHocPhan lhp
      JOIN   HocPhan   hp  ON lhp.MaHP    = hp.MaHP
      JOIN   HocKy     hk  ON lhp.MaHocKy = hk.MaHocKy
-     WHERE  lhp.MaGV = : ${whereHK}
+     WHERE  lhp.MaGV = :maGV ${whereHK}
      ORDER  BY hk.TenHocKy, hp.TenHP`,
     { maGV, ...(maHK && { maHK }) }
   );
@@ -106,7 +101,7 @@ async function getDanhSachSVTrongLop(maLHP) {
      FROM   DangKyHocPhan dk
      JOIN   SinhVien      sv ON dk.MaSV  = sv.MaSV
      LEFT JOIN Diem       d  ON dk.MaDK  = d.MaDK
-     WHERE  dk.MaLHP    = :
+     WHERE  dk.MaLHP    = :maLHP
        AND  dk.TrangThai = N'Đã đăng ký'
      ORDER  BY sv.HoTen`,
     { maLHP }
@@ -122,7 +117,7 @@ async function getGPA(maSV) {
   const gpaHocKy = await execQuery(
     `SELECT MaSV, TenSV, TenHocKy, TongTCTinhGPA, GPA_HocKy
      FROM   V_GPA_HocKy
-     WHERE  MaSV = :
+     WHERE  MaSV = :maSV
      ORDER  BY TenHocKy`,
     { maSV }
   );
@@ -131,7 +126,7 @@ async function getGPA(maSV) {
   const rowsTichLuy = await execQuery(
     `SELECT MaSV, HoTen, TongTCTichLuy, GPA_TichLuy
      FROM   V_GPA_TichLuy
-     WHERE  MaSV = :`,
+     WHERE  MaSV = :maSV`,
     { maSV }
   );
 

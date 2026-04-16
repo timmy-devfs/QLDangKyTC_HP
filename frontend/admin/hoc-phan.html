@@ -1,194 +1,488 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
-    <meta charset="UTF-8">
-    <title>UTH - Quản lý Học Phần</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 30px; background: #e9ecef; color: #333; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); margin-bottom: 25px; }
-        h2 { color: #0056b3; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        h3 { color: #495057; font-size: 1.2rem; }
-        
-        /* Style cho Form */
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .form-group { display: flex; flex-direction: column; }
-        label { font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
-        
-        /* Style cho Table & Toolbar */
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; }
-        #txtSearch { width: 300px; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #007bff; color: white; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý Học phần – ĐKHP</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <style>
+    /* Multi-select tiên quyết */
+    .multi-select-wrap {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      max-height: 180px;
+      overflow-y: auto;
+      background: var(--white);
+    }
+    .multi-select-wrap label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.12s;
+    }
+    .multi-select-wrap label:hover { background: var(--bg-hover); }
+    .multi-select-wrap input[type=checkbox] { accent-color: var(--primary); }
 
-        /* Buttons */
-        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn-add { background: #28a745; color: white; width: 100%; margin-top: 10px; }
-        .btn-add:hover { background: #218838; }
-        .btn-info { background: #17a2b8; color: white; font-size: 0.8rem; }
-        .btn-page { background: #6c757d; color: white; }
-        .btn-page:disabled { background: #ccc; cursor: not-allowed; }
-        
-        .multi-select { height: 100px !important; }
-        .hint { font-size: 0.75rem; color: #666; font-style: italic; }
-    </style>
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; min-width: 300px;
+      padding: 14px 18px; border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md); font-size: .9rem; z-index: 9999;
+      display: none; animation: slideIn .3s ease;
+    }
+    @keyframes slideIn { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
+    #toast.success { background: var(--success-light); color: var(--success); border-left: 4px solid var(--success); }
+    #toast.error   { background: var(--danger-light);  color: var(--danger);  border-left: 4px solid var(--danger); }
+  </style>
 </head>
-
 <body>
+<div class="layout">
 
-    <div class="card">
-        <h2>➕ Thêm Học Phần Mới</h2>
-        <form id="hpForm">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Mã Học Phần</label>
-                    <input type="text" id="MaHP" placeholder="VD: 104006001" required maxlength="10">
-                </div>
-                <div class="form-group">
-                    <label>Tên Học Phần</label>
-                    <input type="text" id="TenHP" placeholder="Nhập tên môn..." required>
-                </div>
-                <div class="form-group">
-                    <label>Số Tín Chỉ</label>
-                    <input type="number" id="SoTinChi" value="3" min="1" max="10">
-                </div>
-                <div class="form-group">
-                    <label>Mã Khoa</label>
-                    <select id="MaKhoa">
-                        <option value="CNTT">Công nghệ thông tin</option>
-                        <option value="LLCT">Lý luận chính trị</option>
-                        <option value="QTKD">Quản trị kinh doanh</option>
-                        <option value="GDQP">Giáo dục quốc phòng</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Tính GPA?</label>
-                    <select id="CoTinhGPA">
-                        <option value="1">Có tính</option>
-                        <option value="0">Không tính</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Môn Tiên Quyết <span class="hint">(Giữ Ctrl để chọn nhiều môn)</span></label>
-                <select id="dsTienQuyet" class="multi-select" multiple>
-                    </select>
-            </div>
-
-            <button type="submit" class="btn btn-add">LƯU HỌC PHẦN</button>
-        </form>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand"><h4>🎓 UTH – ĐKHP</h4><small>Quản trị hệ thống</small></div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="/admin/dashboard.html">    <span class="icon">📊</span> Dashboard</a></li>
+        <li><a href="/admin/sinh-vien.html">    <span class="icon">👨‍🎓</span> Sinh viên</a></li>
+        <li><a href="/admin/giang-vien.html">   <span class="icon">👨‍🏫</span> Giảng viên</a></li>
+        <li><a href="/admin/hoc-ky.html">       <span class="icon">📅</span> Học kỳ</a></li>
+        <li><a href="/admin/hoc-phan.html" class="active"><span class="icon">📚</span> Học phần</a></li>
+        <li><a href="/admin/lop-hoc-phan.html"> <span class="icon">🏫</span> Lớp HP</a></li>
+        <li><a href="/admin/bao-cao.html">      <span class="icon">📈</span> Báo cáo</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="auth.logout()">🚪 Đăng xuất (<span id="tenUser"></span>)</button>
     </div>
+  </aside>
 
-    <div class="card">
-        <h2>📚 Danh sách Học phần</h2>
-        <div class="toolbar">
-            <input type="text" id="txtSearch" placeholder="Tìm tên hoặc mã môn..." oninput="loadData(1)">
-            <div class="pagination">
-                <button class="btn btn-page" id="btnPrev" onclick="movePage(-1)">Trước</button>
-                <span id="lblPage" style="margin: 0 15px; font-weight: bold;">Trang 1</span>
-                <button class="btn btn-page" id="btnNext" onclick="movePage(1)">Sau</button>
-            </div>
+  <!-- Main -->
+  <div class="main">
+    <header class="header">
+      <div class="header-title">📚 Quản lý Học phần</div>
+    </header>
+    <main class="content">
+      <h1 class="page-title">📚 Danh sách Học phần</h1>
+
+      <!-- Search + Add -->
+      <div class="search-bar">
+        <input type="text" id="searchInput" class="form-control" placeholder="🔎 Tìm theo tên hoặc mã HP..." oninput="filterLocal()" />
+        <select id="selKhoa" class="form-control" style="max-width:200px" onchange="loadHP()">
+          <option value="">-- Tất cả khoa --</option>
+        </select>
+        <button class="btn btn-primary" onclick="openFormThem()">+ Thêm học phần</button>
+      </div>
+
+      <!-- Bảng HP -->
+      <div class="card">
+        <div class="card-body" style="padding:0">
+          <div class="table-wrapper">
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>Mã HP</th>
+                  <th>Tên học phần</th>
+                  <th style="text-align:center">TC</th>
+                  <th>Khoa</th>
+                  <th style="text-align:center">Tính GPA</th>
+                  <th style="text-align:center">Tiên quyết</th>
+                  <th style="text-align:center">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyHP">
+                <tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Mã HP</th>
-                    <th>Tên Học Phần</th>
-                    <th>Tín Chỉ</th>
-                    <th>Khoa</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody id="dataBody"></tbody>
-        </table>
+        <div class="card-footer" id="paginationWrap"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal Thêm / Sửa Học phần -->
+<div id="modalHP" class="modal-overlay">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <h5 id="modalHPTitle">➕ Thêm học phần mới</h5>
+      <button class="modal-close" onclick="closeModal('modalHP')">✕</button>
     </div>
+    <div class="modal-body">
+      <input type="hidden" id="editMaHP" />
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label class="form-label required">Mã học phần</label>
+          <input type="text" id="fMaHP" class="form-control" placeholder="VD: 121000001" maxlength="9" />
+        </div>
+        <div class="form-group">
+          <label class="form-label required">Số tín chỉ</label>
+          <input type="number" id="fSoTC" class="form-control" min="1" max="15" placeholder="1–15" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label required">Tên học phần</label>
+        <input type="text" id="fTenHP" class="form-control" placeholder="Nhập tên học phần..." />
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label class="form-label">Khoa phụ trách</label>
+          <select id="fMaKhoa" class="form-control">
+            <option value="">-- Không xác định --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tính GPA?</label>
+          <select id="fCoTinhGPA" class="form-control">
+            <option value="1">Có tính GPA</option>
+            <option value="0">Không tính GPA (môn *)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" id="groupTienQuyet" style="display:none">
+        <label class="form-label">Học phần tiên quyết (chọn nhiều)</label>
+        <div class="form-text" style="margin-bottom:6px">Đây là các môn SV phải qua trước mới được đăng ký môn này.</div>
+        <div class="search-bar" style="margin-bottom:6px">
+          <input type="text" id="searchTQ" class="form-control btn-sm" placeholder="🔎 Lọc nhanh..." oninput="filterTQ()" />
+        </div>
+        <div class="multi-select-wrap" id="listTienQuyet"></div>
+        <div class="form-text" style="margin-top:4px" id="selectedTQText">Chưa chọn môn tiên quyết nào</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalHP')">Hủy</button>
+      <button class="btn btn-primary" id="btnSaveHP" onclick="saveHP()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
 
-    <script>
-        let currPage = 1;
+<!-- Modal xem tiên quyết -->
+<div id="modalTQ" class="modal-overlay">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h5 id="modalTQTitle">📋 Điều kiện tiên quyết</h5>
+      <button class="modal-close" onclick="closeModal('modalTQ')">✕</button>
+    </div>
+    <div class="modal-body" id="modalTQBody"></div>
+  </div>
+</div>
 
-        // 1. Hàm Load dữ liệu (Danh sách + Ô chọn môn tiên quyết)
-        async function loadData(page) {
-            currPage = page;
-            const search = document.getElementById('txtSearch').value;
-            
-            // Gọi API lấy danh sách học phần
-            const res = await fetch(`/api/hoc-phan?page=${page}&limit=10&search=${search}`);
-            const result = await res.json();
+<div id="toast"></div>
 
-            // Đổ dữ liệu vào bảng
-            document.getElementById('dataBody').innerHTML = result.data.map(item => `
-                <tr>
-                    <td><b>${item.MaHP}</b></td>
-                    <td>${item.TenHP}</td>
-                    <td>${item.SoTinChi}</td>
-                    <td>${item.MaKhoa}</td>
-                    <td><button class="btn btn-info" onclick="showDK('${item.MaHP}')">Điều kiện</button></td>
-                </tr>
-            `).join('');
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/api.js"></script>
+<script>
+auth.requireAuth(['Admin']);
 
-            // Cập nhật ô chọn môn tiên quyết (Chỉ load 1 lần hoặc load lại khi search rỗng)
-            if(page === 1 && search === "") {
-                const selectTQ = document.getElementById('dsTienQuyet');
-                selectTQ.innerHTML = result.data.map(item => `
-                    <option value="${item.MaHP}">${item.MaHP} - ${item.TenHP}</option>
-                `).join('');
-            }
+let allHP   = [];   // cache toàn bộ HP từ server
+let allKhoa = [];   // cache danh sách khoa
+let currentPage = 1;
+const LIMIT = 20;
+let editMode = false;
 
-            // Phân trang
-            document.getElementById('lblPage').innerText = `Trang ${result.pagination.page} / ${result.pagination.totalPages}`;
-            document.getElementById('btnPrev').disabled = (page <= 1);
-            document.getElementById('btnNext').disabled = (page >= result.pagination.totalPages);
-        }
+// ── Helpers ──────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = type; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3500);
+}
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-        // 2. Hàm Xử lý Thêm mới (POST)
-        document.getElementById('hpForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+// ── Load danh sách khoa ──────────────────────────────────────
+async function loadKhoa() {
+  try {
+    const { data } = await api.get('/khoa');
+    allKhoa = data;
+    const selKhoa  = document.getElementById('selKhoa');
+    const fMaKhoa  = document.getElementById('fMaKhoa');
+    data.forEach(k => {
+      [selKhoa, fMaKhoa].forEach(sel => {
+        const opt = document.createElement('option');
+        opt.value = k.MaKhoa; opt.textContent = k.TenKhoa;
+        sel.appendChild(opt);
+      });
+    });
+  } catch (e) { console.warn('Không tải được danh sách khoa:', e.message); }
+}
 
-            // Lấy danh sách các môn đã chọn trong Multi-select
-            const selectTQ = document.getElementById('dsTienQuyet');
-            const selectedTQ = Array.from(selectTQ.selectedOptions).map(opt => opt.value);
+// ── Load & render bảng HP ────────────────────────────────────
+async function loadHP(page = 1) {
+  currentPage = page;
+  const tuKhoa = document.getElementById('searchInput').value.trim();
+  const maKhoa = document.getElementById('selKhoa').value;
+  const tbody  = document.getElementById('tbodyHP');
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>`;
 
-            const payload = {
-                MaHP: document.getElementById('MaHP').value,
-                TenHP: document.getElementById('TenHP').value,
-                SoTinChi: parseInt(document.getElementById('SoTinChi').value),
-                CoTinhGPA: parseInt(document.getElementById('CoTinhGPA').value),
-                MaKhoa: document.getElementById('MaKhoa').value,
-                dsTienQuyet: selectedTQ
-            };
+  try {
+    const ep = `/hoc-phan?page=${page}&limit=${LIMIT}&tuKhoa=${encodeURIComponent(tuKhoa)}&maKhoa=${encodeURIComponent(maKhoa)}`;
+    const res = await api.get(ep);
+    allHP = res.data;
+    renderHP(res.data);
+    renderPagination(res.total, res.page, res.totalPages);
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:24px">Lỗi: ${e.message}</td></tr>`;
+  }
+}
 
-            const res = await fetch('/api/hoc-phan/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+function renderHP(data) {
+  const tbody = document.getElementById('tbodyHP');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div><p>Không tìm thấy học phần nào</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(hp => `
+    <tr>
+      <td><code>${hp.MaHP}</code></td>
+      <td><strong>${hp.TenHP}</strong></td>
+      <td style="text-align:center">${hp.SoTinChi}</td>
+      <td>${hp.TenKhoa || '<span style="color:var(--text-muted)">–</span>'}</td>
+      <td style="text-align:center">
+        ${hp.CoTinhGPA
+          ? '<span class="badge badge-success">Có</span>'
+          : '<span class="badge badge-gray">Không</span>'}
+      </td>
+      <td style="text-align:center">
+        ${hp.SoTienQuyet > 0
+          ? `<button class="btn btn-secondary btn-sm" onclick="xemTienQuyet('${hp.MaHP}','${hp.TenHP}')">
+               📋 ${hp.SoTienQuyet} môn
+             </button>`
+          : '<span style="color:var(--text-muted)">–</span>'}
+      </td>
+      <td style="text-align:center">
+        <button class="btn btn-warning btn-sm" onclick="openFormSua('${hp.MaHP}')">✏️ Sửa</button>
+        <button class="btn btn-danger  btn-sm" onclick="xoaHP('${hp.MaHP}','${hp.TenHP}')">🗑</button>
+      </td>
+    </tr>`).join('');
+}
 
-            const result = await res.json();
-            if (result.success) {
-                alert("Thêm học phần thành công!");
-                document.getElementById('hpForm').reset();
-                loadData(1); // Load lại trang 1 để thấy môn mới
-            } else {
-                alert("Lỗi: " + result.error);
-            }
-        });
+function filterLocal() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = allHP.filter(hp =>
+    hp.TenHP.toLowerCase().includes(q) || hp.MaHP.toLowerCase().includes(q)
+  );
+  renderHP(filtered);
+}
 
-        // 3. Hàm xem môn tiên quyết (Đã có của bạn)
-        async function showDK(id) {
-            const res = await fetch(`/api/hoc-phan/${id}/dieu-kien`);
-            const data = await res.json();
-            if (data.length === 0) alert("Môn này không có môn tiên quyết.");
-            else alert("Các môn tiên quyết:\n" + data.map(d => "- " + d.TenHP).join("\n"));
-        }
+function renderPagination(total, page, totalPages) {
+  const wrap = document.getElementById('paginationWrap');
+  if (totalPages <= 1) { wrap.innerHTML = ''; return; }
+  let html = `<div class="pagination">`;
+  html += `<button class="page-btn" ${page<=1?'disabled':''} onclick="loadHP(${page-1})">←</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - page) <= 2) {
+      html += `<button class="page-btn ${i===page?'active':''}" onclick="loadHP(${i})">${i}</button>`;
+    } else if (Math.abs(i - page) === 3) {
+      html += `<span style="padding:0 4px">…</span>`;
+    }
+  }
+  html += `<button class="page-btn" ${page>=totalPages?'disabled':''} onclick="loadHP(${page+1})">→</button>`;
+  html += `<span style="font-size:.8rem;color:var(--text-muted);margin-left:8px">Tổng ${total} HP</span></div>`;
+  wrap.innerHTML = html;
+}
 
-        function movePage(step) { loadData(currPage + step); }
-        
-        // Khởi chạy khi load trang
-        loadData(1);
-    </script>
+// ── Tiên quyết list trong modal ──────────────────────────────
+let allHPForTQ = [];   // tất cả HP để chọn tiên quyết
+
+async function loadHPForTQ(excludeMaHP = '') {
+  if (!allHPForTQ.length) {
+    const { data } = await api.get('/hoc-phan?limit=500');
+    allHPForTQ = data;
+  }
+  const list = document.getElementById('listTienQuyet');
+  const items = allHPForTQ.filter(hp => hp.MaHP !== excludeMaHP);
+  renderTQList(items);
+}
+
+function renderTQList(items) {
+  const list = document.getElementById('listTienQuyet');
+  list.innerHTML = items.map(hp => `
+    <label>
+      <input type="checkbox" value="${hp.MaHP}" onchange="updateTQText()" />
+      <span><code>${hp.MaHP}</code> – ${hp.TenHP} (${hp.SoTinChi} TC)</span>
+    </label>`).join('');
+}
+
+function filterTQ() {
+  const q = document.getElementById('searchTQ').value.toLowerCase();
+  const excludeMaHP = document.getElementById('editMaHP').value;
+  const filtered = allHPForTQ.filter(hp =>
+    hp.MaHP !== excludeMaHP &&
+    (hp.TenHP.toLowerCase().includes(q) || hp.MaHP.toLowerCase().includes(q))
+  );
+  renderTQList(filtered);
+}
+
+function updateTQText() {
+  const checked = [...document.querySelectorAll('#listTienQuyet input:checked')];
+  const el = document.getElementById('selectedTQText');
+  el.textContent = checked.length
+    ? `Đã chọn ${checked.length} môn tiên quyết`
+    : 'Chưa chọn môn tiên quyết nào';
+}
+
+function getCheckedTQ() {
+  return [...document.querySelectorAll('#listTienQuyet input:checked')].map(cb => cb.value);
+}
+
+// ── Form thêm ────────────────────────────────────────────────
+async function openFormThem() {
+  editMode = false;
+  document.getElementById('modalHPTitle').textContent = '➕ Thêm học phần mới';
+  document.getElementById('editMaHP').value = '';
+  document.getElementById('fMaHP').value    = '';
+  document.getElementById('fTenHP').value   = '';
+  document.getElementById('fSoTC').value    = '';
+  document.getElementById('fMaKhoa').value  = '';
+  document.getElementById('fCoTinhGPA').value = '1';
+  document.getElementById('fMaHP').disabled = false;
+  document.getElementById('groupTienQuyet').style.display = 'block';
+  await loadHPForTQ('');
+  openModal('modalHP');
+}
+
+// ── Form sửa ─────────────────────────────────────────────────
+async function openFormSua(maHP) {
+  editMode = true;
+  document.getElementById('modalHPTitle').textContent = '✏️ Sửa học phần';
+  document.getElementById('editMaHP').value = maHP;
+  document.getElementById('fMaHP').disabled = true;
+
+  try {
+    const { data } = await api.get(`/hoc-phan/${maHP}`);
+    document.getElementById('fMaHP').value    = data.MaHP;
+    document.getElementById('fTenHP').value   = data.TenHP;
+    document.getElementById('fSoTC').value    = data.SoTinChi;
+    document.getElementById('fMaKhoa').value  = data.MaKhoa || '';
+    document.getElementById('fCoTinhGPA').value = String(data.CoTinhGPA);
+
+    // Load tiên quyết và check các môn đang có
+    document.getElementById('groupTienQuyet').style.display = 'block';
+    await loadHPForTQ(maHP);
+    const tqMaHPs = data.dieuKienTienQuyet.map(d => d.MaHPTruoc);
+    document.querySelectorAll('#listTienQuyet input').forEach(cb => {
+      if (tqMaHPs.includes(cb.value)) cb.checked = true;
+    });
+    updateTQText();
+    openModal('modalHP');
+  } catch (e) {
+    showToast('Lỗi tải thông tin: ' + e.message, 'error');
+  }
+}
+
+// ── Lưu HP ───────────────────────────────────────────────────
+async function saveHP() {
+  const maHP      = document.getElementById('fMaHP').value.trim().toUpperCase();
+  const tenHP     = document.getElementById('fTenHP').value.trim();
+  const soTinChi  = parseInt(document.getElementById('fSoTC').value);
+  const maKhoa    = document.getElementById('fMaKhoa').value || null;
+  const coTinhGPA = parseInt(document.getElementById('fCoTinhGPA').value);
+  const checkedTQ = getCheckedTQ();
+
+  if (!tenHP || !soTinChi) {
+    return showToast('Vui lòng nhập đầy đủ Tên HP và Số tín chỉ.', 'error');
+  }
+  if (!editMode && !maHP) {
+    return showToast('Vui lòng nhập Mã học phần.', 'error');
+  }
+
+  const btn = document.getElementById('btnSaveHP');
+  btn.disabled = true; btn.textContent = '⏳';
+
+  try {
+    let savedMaHP = maHP;
+    if (!editMode) {
+      // Thêm mới
+      const { data } = await api.post('/hoc-phan', { maHP, tenHP, soTinChi, coTinhGPA, maKhoa });
+      savedMaHP = data.MaHP;
+      showToast(`✅ Đã thêm học phần "${tenHP}" thành công.`);
+    } else {
+      savedMaHP = document.getElementById('editMaHP').value;
+      await api.put(`/hoc-phan/${savedMaHP}`, { tenHP, soTinChi, coTinhGPA, maKhoa });
+      showToast(`✅ Đã cập nhật học phần "${tenHP}".`);
+    }
+
+    // Đồng bộ tiên quyết: lấy hiện tại → so sánh → thêm/xóa
+    const { data: curTQ } = await api.get(`/hoc-phan/${savedMaHP}/dieu-kien`);
+    const curSet = new Set(curTQ.map(d => d.MaHPTruoc));
+    const newSet = new Set(checkedTQ);
+
+    // Thêm mới
+    for (const maTQ of newSet) {
+      if (!curSet.has(maTQ)) {
+        await api.post(`/hoc-phan/${savedMaHP}/dieu-kien`, { maHPTruoc: maTQ, loaiDK: 'b' });
+      }
+    }
+    // Xóa không còn được check
+    for (const maTQ of curSet) {
+      if (!newSet.has(maTQ)) {
+        await api.del(`/hoc-phan/${savedMaHP}/dieu-kien/${maTQ}`);
+      }
+    }
+
+    closeModal('modalHP');
+    await loadHP(currentPage);
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Lưu';
+  }
+}
+
+// ── Xóa HP ───────────────────────────────────────────────────
+async function xoaHP(maHP, tenHP) {
+  if (!confirm(`Xóa học phần "${tenHP}" (${maHP})? Thao tác này không thể hoàn tác.`)) return;
+  try {
+    await api.del(`/hoc-phan/${maHP}`);
+    showToast(`✅ Đã xóa học phần ${maHP}.`);
+    await loadHP(currentPage);
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  }
+}
+
+// ── Xem tiên quyết ───────────────────────────────────────────
+async function xemTienQuyet(maHP, tenHP) {
+  document.getElementById('modalTQTitle').textContent = `📋 Tiên quyết: ${tenHP}`;
+  document.getElementById('modalTQBody').innerHTML =
+    `<div style="text-align:center;padding:16px"><div class="spinner"></div></div>`;
+  openModal('modalTQ');
+
+  try {
+    const { data } = await api.get(`/hoc-phan/${maHP}/dieu-kien`);
+    if (!data.length) {
+      document.getElementById('modalTQBody').innerHTML =
+        `<div class="empty-state"><div class="empty-icon">✅</div><p>Không có điều kiện tiên quyết</p></div>`;
+      return;
+    }
+    document.getElementById('modalTQBody').innerHTML = `
+      <table class="table table-striped" style="margin:0">
+        <thead><tr><th>Mã HP</th><th>Tên HP tiên quyết</th><th>Loại</th></tr></thead>
+        <tbody>
+          ${data.map(d => `
+            <tr>
+              <td><code>${d.MaHPTruoc}</code></td>
+              <td>${d.TenHPTruoc}</td>
+              <td><span class="badge badge-info">${d.TenLoaiDK}</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (e) {
+    document.getElementById('modalTQBody').innerHTML =
+      `<div class="alert alert-danger">Lỗi: ${e.message}</div>`;
+  }
+}
+
+// ── Khởi chạy ────────────────────────────────────────────────
+(async () => {
+  await loadKhoa();
+  await loadHP();
+})();
+</script>
 </body>
-
 </html>

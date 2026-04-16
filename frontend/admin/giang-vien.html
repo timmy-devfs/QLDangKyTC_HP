@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,242 +9,507 @@
     <link rel="stylesheet" href="/assets/css/components.css">
     <style>
         /* ===== TÁI SỬ DỤNG LAYOUT DASHBOARD ===== */
-        .layout { display: flex; min-height: 100vh; }
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
         .sidebar {
-            width: 250px; flex-shrink: 0;
-            background: var(--color-secondary);
-            display: flex; flex-direction: column;
-            box-shadow: 2px 0 8px rgba(0,0,0,.2);
+            width: 250px;
+            flex-shrink: 0;
+            background: var(--primary);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, .2);
         }
-        .sidebar-brand { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .sidebar-brand h2 { color: #fff; font-size: 15px; font-weight: 700; line-height: 1.4; }
-        .sidebar-brand span { color: #a8c7e8; font-size: 12px; }
-        .sidebar-nav { flex: 1; padding: 16px 0; }
+
+        .sidebar-brand {
+            padding: 24px 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-brand h2 {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        .sidebar-brand span {
+            color: #a8c7e8;
+            font-size: 12px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 0;
+        }
+
         .nav-section {
-            padding: 8px 20px 4px; font-size: 10px; font-weight: 700; 
-            color: rgba(255,255,255,0.4); text-transform: uppercase;
+            padding: 8px 20px 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
         }
+
         .nav-item {
-            display: flex; align-items: center; gap: 10px; padding: 11px 20px;
-            color: rgba(255,255,255,0.75); text-decoration: none; font-size: 14px; 
-            transition: all .15s; border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 20px;
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all .15s;
+            border-left: 3px solid transparent;
         }
-        .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
-        .nav-item.active { background: rgba(46,117,182,0.4); color: #fff; border-left-color: var(--color-primary); }
-        
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background-color: #f8fafc; }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: rgba(46, 117, 182, 0.4);
+            color: #fff;
+            border-left-color: var(--color-primary);
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: #f8fafc;
+        }
+
         .topbar {
-            background: #fff; padding: 16px 28px; display: flex; align-items: center; 
-            justify-content: space-between; border-bottom: 1px solid #e2e8f0;
+            background: #fff;
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .topbar h1 { font-size: 18px; color: var(--color-secondary); font-weight: 700; margin: 0; }
-        .user-profile { display: flex; align-items: center; gap: 12px; }
-        .avatar { 
-            width: 35px; height: 35px; background: var(--color-primary); 
-            color: white; border-radius: 50%; display: flex; 
-            align-items: center; justify-content: center; font-weight: bold;
+
+        .topbar h1 {
+            font-size: 18px;
+            color: var(--color-secondary);
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 35px;
+            height: 35px;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
 
         /* ===== PAGE SPECIFIC ===== */
-        .content-body { padding: 28px; overflow-y: auto; flex: 1; }
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .card { background: #fff; border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
-        
+        .content-body {
+            padding: 28px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
         /* Table Styles */
-        .table-wrapper { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 14px 20px; text-align: left; border-bottom: 1px solid #f1f5f9; }
-        th { background: #f8fafc; font-weight: 600; font-size: 13px; color: #64748b; text-transform: uppercase; }
-        td { font-size: 14px; color: #334155; }
-        tr:hover td { background: #f8fafc; }
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 14px 20px;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            font-size: 13px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        td {
+            font-size: 14px;
+            color: #334155;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
 
         /* Action Buttons */
-        .btn-group { display: flex; gap: 6px; }
-        .btn-edit { background: #f59e0b; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600;}
-        .btn-edit:hover { background: #d97706; }
-        .btn-delete { background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600;}
-        .btn-delete:hover { background: #dc2626; }
-        
+        .btn-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn-edit:hover {
+            background: #d97706;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+
         /* Modal Form CSS */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
-            z-index: 1000; opacity: 0; transition: opacity 0.2s;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        .modal-overlay.open { display: flex; opacity: 1; }
-        .modal {
-            background: white; border-radius: 10px; width: 100%; max-width: 600px; /* To hơn chút vì nhiều field */
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: translateY(-20px); transition: transform 0.2s;
-            overflow: hidden; max-height: 90vh; display: flex; flex-direction: column;
-        }
-        .modal-overlay.open .modal { transform: translateY(0); }
-        .modal-header { padding: 20px 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h3 { margin: 0; font-size: 18px; color: #1e293b; }
-        .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; }
-        
-        /* Form 2 cột */
-        .modal-body { padding: 24px; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .modal-footer { padding: 16px 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 12px; }
 
-        .form-group { margin-bottom: 0; }
-        .form-group.full-width { grid-column: span 2; }
-        .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; }
-        .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
-        .form-control:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(46,117,182,0.1); }
+        .modal-overlay.open {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+            /* To hơn chút vì nhiều field */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(-20px);
+            transition: transform 0.2s;
+            overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-overlay.open .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #1e293b;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+
+        /* Form 2 cột */
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            background: #f8fafc;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(46, 117, 182, 0.1);
+        }
 
         /* Toast */
         #toast {
-            position:fixed; bottom:24px; right:24px; min-width:300px;
-            padding:14px 18px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15);
-            font-size:14px; z-index:9999; display:none; color: white;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            min-width: 300px;
+            padding: 14px 18px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 14px;
+            z-index: 9999;
+            display: none;
+            color: white;
             animation: slideIn .3s ease;
         }
-        @keyframes slideIn { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
-        #toast.success { background: #10b981; }
-        #toast.error   { background: #ef4444; }
-    </style>
-</head>
-<body>
-<div class="layout">
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <h2>🎓 UTH – ĐKHP</h2>
-            <span>Quản trị hệ thống</span>
-        </div>
-        <nav class="sidebar-nav">
-            <div class="nav-section">Tổng quan</div>
-            <a href="/admin/dashboard.html" class="nav-item">📊 Dashboard</a>
-            
-            <div class="nav-section">Quản lý dữ liệu</div>
-            <a href="/admin/sinh-vien.html" class="nav-item">👩‍🎓 Sinh viên</a>
-            <a href="/admin/giang-vien.html" class="nav-item active">👨‍🏫 Giảng viên</a>
-            <a href="/admin/hoc-phan.html" class="nav-item">📚 Học phần</a>
-            <a href="/admin/lop-hoc-phan.html" class="nav-item">🏫 Lớp học phần</a>
-            <a href="/admin/hoc-ky.html" class="nav-item">📅 Học kỳ</a>
-            
-            <div class="nav-section">Báo cáo</div>
-            <a href="/admin/bao-cao.html" class="nav-item">📈 Thống kê & Báo cáo</a>
-        </nav>
-        <div class="sidebar-footer" style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <button class="btn-logout" onclick="auth.logout()" style="width:100%; padding: 10px; background: #c00000; border:none; color:white; border-radius:5px; cursor:pointer;">🚪 Đăng xuất</button>
-        </div>
-    </aside>
 
-    <div class="main">
-        <header class="topbar">
-            <h1>👨‍🏫 Quản lý Giảng viên</h1>
-            <div class="user-profile">
-                <div class="avatar">A</div>
-                <span id="tenUser" style="font-weight: 600; color: #1e293b;">Admin</span>
-            </div>
-        </header>
-
-        <div class="content-body">
-            <div class="page-header">
-                <div>
-                    <h2 style="margin: 0; font-size: 20px; color: #0f172a;">Danh sách Giảng viên</h2>
-                    <p style="margin: 4px 0 0; color: #64748b; font-size: 14px;">Quản lý thông tin giảng viên bộ môn</p>
-                </div>
-                <button class="btn btn-primary" onclick="openModal()" style="padding: 10px 16px; border-radius: 6px; font-weight: 600;">
-                    + Thêm Giảng viên
-                </button>
-            </div>
-
-            <div class="card">
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Mã GV</th>
-                                <th>Họ và Tên</th>
-                                <th>Bộ môn</th>
-                                <th>Học vị</th>
-                                <th>Liên hệ</th>
-                                <th>Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody id="dataTable">
-                            <tr><td colspan="6" style="text-align:center; padding: 30px;">Đang tải dữ liệu...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Form -->
-<div id="gvModal" class="modal-overlay">
-    <div class="modal">
-        <div class="modal-header">
-            <h3 id="modalTitle">Thêm Giảng viên mới</h3>
-            <button class="btn-close" onclick="closeModal()">✕</button>
-        </div>
-        <form id="gvForm" onsubmit="saveGiangVien(event)">
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Mã Giảng viên</label>
-                    <input type="text" id="txtMaGV" class="form-control" required placeholder="VD: GV001...">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Họ và Tên</label>
-                    <input type="text" id="txtHoTen" class="form-control" required placeholder="Nhập họ tên đầy đủ...">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Bộ môn / Khoa</label>
-                    <input type="text" id="txtBoMon" class="form-control" required placeholder="VD: Khoa CNTT">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Học vị</label>
-                    <input type="text" id="txtHocVi" class="form-control" placeholder="VD: ThS, TS...">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" id="txtEmail" class="form-control" required placeholder="Địa chỉ email...">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Số điện thoại</label>
-                    <input type="text" id="txtSDT" class="form-control" placeholder="Số điện thoại cá nhân...">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn" style="background:#e2e8f0; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;" onclick="closeModal()">Hủy</button>
-                <button type="submit" class="btn btn-primary" style="padding:8px 16px; border-radius:6px;">Lưu lại</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div id="toast"></div>
-
-<script src="/assets/js/auth.js"></script>
-<script src="/assets/js/api.js"></script>
-<script>
-    auth.requireAuth(["Admin"]);
-    document.getElementById("tenUser").textContent = auth.getUser()?.hoTen || "Admin";
-
-    let isEditMode = false;
-    let currentEditId = null;
-
-    function showToast(msg, type = 'success') {
-        const t = document.getElementById('toast');
-        t.textContent = msg; t.className = type; t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 3000);
-    }
-
-    async function loadData() {
-        try {
-            const res = await api.get('/giang-vien');
-            const data = (res.data || res); // Xử lý tùy backend
-            const tbody = document.getElementById('dataTable');
-            
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có dữ liệu giảng viên</td></tr>';
-                return;
+        @keyframes slideIn {
+            from {
+                transform: translateX(120%);
+                opacity: 0
             }
 
-            tbody.innerHTML = data.map(db => {
-                return `
+            to {
+                transform: translateX(0);
+                opacity: 1
+            }
+        }
+
+        #toast.success {
+            background: #10b981;
+        }
+
+        #toast.error {
+            background: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🎓 UTH – ĐKHP</h2>
+                <span>Quản trị hệ thống</span>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">Tổng quan</div>
+                <a href="/admin/dashboard.html" class="nav-item">📊 Dashboard</a>
+
+                <div class="nav-section">Quản lý dữ liệu</div>
+                <a href="/admin/sinh-vien.html" class="nav-item">👩‍🎓 Sinh viên</a>
+                <a href="/admin/giang-vien.html" class="nav-item active">👨‍🏫 Giảng viên</a>
+                <a href="/admin/hoc-phan.html" class="nav-item">📚 Học phần</a>
+                <a href="/admin/lop-hoc-phan.html" class="nav-item">🏫 Lớp học phần</a>
+                <a href="/admin/hoc-ky.html" class="nav-item">📅 Học kỳ</a>
+
+                <div class="nav-section">Báo cáo</div>
+                <a href="/admin/bao-cao.html" class="nav-item">📈 Thống kê & Báo cáo</a>
+            </nav>
+            <div class="sidebar-footer" style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <button class="btn-logout" onclick="auth.logout()"
+                    style="width:100%; padding: 10px; background: #c00000; border:none; color:white; border-radius:5px; cursor:pointer;">🚪
+                    Đăng xuất</button>
+            </div>
+        </aside>
+
+        <div class="main">
+            <header class="topbar">
+                <h1>👨‍🏫 Quản lý Giảng viên</h1>
+                <div class="user-profile">
+                    <div class="avatar">A</div>
+                    <span id="tenUser" style="font-weight: 600; color: #1e293b;">Admin</span>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <div class="page-header">
+                    <div>
+                        <h2 style="margin: 0; font-size: 20px; color: #0f172a;">Danh sách Giảng viên</h2>
+                        <p style="margin: 4px 0 0; color: #64748b; font-size: 14px;">Quản lý thông tin giảng viên bộ môn
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal()"
+                        style="padding: 10px 16px; border-radius: 6px; font-weight: 600;">
+                        + Thêm Giảng viên
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Mã GV</th>
+                                    <th>Họ và Tên</th>
+                                    <th>Bộ môn</th>
+                                    <th>Học vị</th>
+                                    <th>Liên hệ</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTable">
+                                <tr>
+                                    <td colspan="6" style="text-align:center; padding: 30px;">Đang tải dữ liệu...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="gvModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Thêm Giảng viên mới</h3>
+                <button class="btn-close" onclick="closeModal()">✕</button>
+            </div>
+            <form id="gvForm" onsubmit="saveGiangVien(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Mã Giảng viên</label>
+                        <input type="text" id="txtMaGV" class="form-control" required placeholder="VD: GV001...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Họ và Tên</label>
+                        <input type="text" id="txtHoTen" class="form-control" required
+                            placeholder="Nhập họ tên đầy đủ...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bộ môn / Khoa</label>
+                        <input type="text" id="txtBoMon" class="form-control" required placeholder="VD: Khoa CNTT">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Học vị</label>
+                        <input type="text" id="txtHocVi" class="form-control" placeholder="VD: ThS, TS...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="txtEmail" class="form-control" required placeholder="Địa chỉ email...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Số điện thoại</label>
+                        <input type="text" id="txtSDT" class="form-control" placeholder="Số điện thoại cá nhân...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn"
+                        style="background:#e2e8f0; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;"
+                        onclick="closeModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary" style="padding:8px 16px; border-radius:6px;">Lưu
+                        lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script src="/assets/js/auth.js"></script>
+    <script src="/assets/js/api.js"></script>
+    <script>
+        auth.requireAuth(["Admin"]);
+        document.getElementById("tenUser").textContent = auth.getUser()?.hoTen || "Admin";
+
+        let isEditMode = false;
+        let currentEditId = null;
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.className = type; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        async function loadData() {
+            try {
+                const res = await api.get('/giang-vien');
+                const data = (res.data || res); // Xử lý tùy backend
+                const tbody = document.getElementById('dataTable');
+
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có dữ liệu giảng viên</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.map(db => {
+                    return `
                 <tr>
                     <td style="font-weight:600; color:var(--color-primary);">${db.MaGV}</td>
                     <td style="font-weight:500;">${db.HoTen}</td>
@@ -261,78 +527,79 @@
                     </td>
                 </tr>
             `}).join('');
-        } catch (e) {
-            showToast('Lỗi tải dữ liệu: ' + e.message, 'error');
-        }
-    }
-
-    function openModal(isEdit = false, maGV = '', hoTen = '', boMon = '', hocVi = '', email = '', sdt = '') {
-        isEditMode = isEdit;
-        currentEditId = maGV;
-        
-        document.getElementById('modalTitle').textContent = isEdit ? 'Sửa thông tin Giảng viên' : 'Thêm Giảng viên mới';
-        
-        const txtMaGV = document.getElementById('txtMaGV');
-        txtMaGV.value = maGV;
-        document.getElementById('txtHoTen').value = hoTen;
-        document.getElementById('txtBoMon').value = boMon;
-        document.getElementById('txtHocVi').value = hocVi;
-        document.getElementById('txtEmail').value = email;
-        document.getElementById('txtSDT').value = sdt;
-
-        // Nếu sửa, không cho phép đổi Mã GV
-        txtMaGV.disabled = isEdit;
-
-        document.getElementById('gvModal').classList.add('open');
-    }
-
-    function closeModal() {
-        document.getElementById('gvModal').classList.remove('open');
-        document.getElementById('gvForm').reset();
-    }
-
-    async function saveGiangVien(e) {
-        e.preventDefault();
-        
-        const payload = {
-            MaGV: document.getElementById('txtMaGV').value,
-            HoTen: document.getElementById('txtHoTen').value,
-            BoMon: document.getElementById('txtBoMon').value,
-            HocVi: document.getElementById('txtHocVi').value,
-            Email: document.getElementById('txtEmail').value,
-            SoDienThoai: document.getElementById('txtSDT').value
-        };
-
-        try {
-            if (isEditMode) {
-                await api.put(`/giang-vien/${currentEditId}`, payload);
-                showToast('Đã cập nhật giảng viên thành công');
-            } else {
-                await api.post('/giang-vien', payload);
-                showToast('Đã thêm giảng viên thành công');
+            } catch (e) {
+                showToast('Lỗi tải dữ liệu: ' + e.message, 'error');
             }
-            closeModal();
-            loadData();
-        } catch (err) {
-            showToast('Lỗi: ' + err.message, 'error');
         }
-    }
 
-    async function deleteObj(id, name) {
-        if (!confirm(`Bạn có chắc muốn xóa giảng viên: ${name} (${id}) không?`)) return;
-        
-        try {
-            await api.del(`/giang-vien/${id}`);
-            showToast('Xóa thành công');
-            loadData();
-        } catch (e) {
-            // Hiển thị lỗi khóa ngoại từ Backend
-            showToast('Lỗi xóa: ' + e.message, 'error');
+        function openModal(isEdit = false, maGV = '', hoTen = '', boMon = '', hocVi = '', email = '', sdt = '') {
+            isEditMode = isEdit;
+            currentEditId = maGV;
+
+            document.getElementById('modalTitle').textContent = isEdit ? 'Sửa thông tin Giảng viên' : 'Thêm Giảng viên mới';
+
+            const txtMaGV = document.getElementById('txtMaGV');
+            txtMaGV.value = maGV;
+            document.getElementById('txtHoTen').value = hoTen;
+            document.getElementById('txtBoMon').value = boMon;
+            document.getElementById('txtHocVi').value = hocVi;
+            document.getElementById('txtEmail').value = email;
+            document.getElementById('txtSDT').value = sdt;
+
+            // Nếu sửa, không cho phép đổi Mã GV
+            txtMaGV.disabled = isEdit;
+
+            document.getElementById('gvModal').classList.add('open');
         }
-    }
 
-    // Init
-    loadData();
-</script>
+        function closeModal() {
+            document.getElementById('gvModal').classList.remove('open');
+            document.getElementById('gvForm').reset();
+        }
+
+        async function saveGiangVien(e) {
+            e.preventDefault();
+
+            const payload = {
+                MaGV: document.getElementById('txtMaGV').value,
+                HoTen: document.getElementById('txtHoTen').value,
+                BoMon: document.getElementById('txtBoMon').value,
+                HocVi: document.getElementById('txtHocVi').value,
+                Email: document.getElementById('txtEmail').value,
+                SoDienThoai: document.getElementById('txtSDT').value
+            };
+
+            try {
+                if (isEditMode) {
+                    await api.put(`/giang-vien/${currentEditId}`, payload);
+                    showToast('Đã cập nhật giảng viên thành công');
+                } else {
+                    await api.post('/giang-vien', payload);
+                    showToast('Đã thêm giảng viên thành công');
+                }
+                closeModal();
+                loadData();
+            } catch (err) {
+                showToast('Lỗi: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteObj(id, name) {
+            if (!confirm(`Bạn có chắc muốn xóa giảng viên: ${name} (${id}) không?`)) return;
+
+            try {
+                await api.del(`/giang-vien/${id}`);
+                showToast('Xóa thành công');
+                loadData();
+            } catch (e) {
+                // Hiển thị lỗi khóa ngoại từ Backend
+                showToast('Lỗi xóa: ' + e.message, 'error');
+            }
+        }
+
+        // Init
+        loadData();
+    </script>
 </body>
+
 </html>

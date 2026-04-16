@@ -24,7 +24,7 @@ async function connectDB() {
 }
 
 async function execQuery(query, params = {}) {
-  const [rows] = await pool.execute(query, params);
+  const [rows] = await pool.query(query, params);
   return rows;
 }
 
@@ -39,7 +39,7 @@ async function execSP(spName, params = {}) {
     : keys.map((k) => `:${k}`).join(',');
 
   const callSql = `CALL ${spName}(${placeholders})`;
-  const [rows] = await pool.execute(callSql, params);
+  const [rows] = await pool.query(callSql, params);
   return rows;
 }
 

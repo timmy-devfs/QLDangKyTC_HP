@@ -1,170 +1,480 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>Hệ Thống Quản Lý Lớp Học Phần</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #f4f7f6; color: #333; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        h2 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px; }
-        .form-group { display: flex; flex-direction: column; }
-        label { font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; width: 100%; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; color: #666; }
-        
-        /* CSS Badge chuẩn theo Task 5 */
-        .badge { padding: 6px 12px; border-radius: 20px; color: white; font-weight: bold; font-size: 0.85rem; display: inline-block; min-width: 50px; text-align: center; }
-        .bg-danger { background-color: #dc3545; }  /* Đỏ < 20% */
-        .bg-warning { background-color: #ffc107; color: #212529; } /* Vàng 20-50% */
-        .bg-success { background-color: #28a745; } /* Xanh > 50% */
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý Lớp Học phần – ĐKHP</title>
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <style>
+    #toast {
+      position:fixed; bottom:24px; right:24px; min-width:300px;
+      padding:14px 18px; border-radius:var(--radius-md); box-shadow:var(--shadow-md);
+      font-size:.9rem; z-index:9999; display:none; animation:slideIn .3s ease;
+    }
+    @keyframes slideIn { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
+    #toast.success { background:var(--success-light); color:var(--success); border-left:4px solid var(--success); }
+    #toast.error   { background:var(--danger-light);  color:var(--danger);  border-left:4px solid var(--danger); }
 
-        .btn-submit { background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; }
-        .btn-close { color: #dc3545; background: white; border: 1px solid #dc3545; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: 0.3s; }
-        .btn-close:hover { background: #dc3545; color: white; }
-    </style>
+    .trang-thai-badge {
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .ts-mo   { background:#E2F0D9; color:#1E6B3C; }
+    .ts-day  { background:#FFE0E0; color:#C00000; }
+    .ts-dong { background:#F2F2F2; color:#666;   }
+    .ts-huy  { background:#FFF2CC; color:#C55A11; }
+  </style>
 </head>
 <body>
+<div class="layout">
 
-    <div class="card">
-        <h2>Mở Lớp Học Phần Mới</h2>
-        <form id="formMoLop">
-            <div class="form-grid">
-                <div class="form-group"><label>Mã Lớp</label><input type="text" id="MaLHP" placeholder="LHP_121000_02" required></div>
-                <div class="form-group"><label>Học Phần</label><select id="MaHP" required><option value="">Đang tải dữ liệu...</option></select></div>
-                <div class="form-group"><label>Giảng Viên (Mã)</label><input type="text" id="MaGV" placeholder="GV000001" required></div>
-                <div class="form-group"><label>Phòng</label><input type="text" id="PhongHoc" placeholder="A301" required></div>
-                <div class="form-group"><label>Thứ</label><input type="number" id="ThuHoc" min="2" max="8" value="2"></div>
-                <div class="form-group"><label>Tiết Bắt Đầu</label><input type="number" id="TietBatDau" min="1" max="10" value="1"></div>
-                <div class="form-group"><label>Số Tiết</label><input type="number" id="SoTiet" value="3"></div>
-                <div class="form-group"><label>Sĩ Số Tối Đa</label><input type="number" id="SiSoToiDa" value="40"></div>
-                <div class="form-group"><label>Mã Học Kỳ</label><input type="text" id="MaHocKy" value="HK2_2425" required></div>
-            </div>
-            <button type="submit" class="btn-submit">Mở Lớp</button>
-        </form>
+  <aside class="sidebar">
+    <div class="sidebar-brand"><h4>🎓 UTH – ĐKHP</h4><small>Quản trị hệ thống</small></div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="/admin/dashboard.html">         <span class="icon">📊</span> Dashboard</a></li>
+        <li><a href="/admin/sinh-vien.html">         <span class="icon">👨‍🎓</span> Sinh viên</a></li>
+        <li><a href="/admin/giang-vien.html">        <span class="icon">👨‍🏫</span> Giảng viên</a></li>
+        <li><a href="/admin/hoc-ky.html">            <span class="icon">📅</span> Học kỳ</a></li>
+        <li><a href="/admin/hoc-phan.html">          <span class="icon">📚</span> Học phần</a></li>
+        <li><a href="/admin/lop-hoc-phan.html" class="active"><span class="icon">🏫</span> Lớp HP</a></li>
+        <li><a href="/admin/bao-cao.html">           <span class="icon">📈</span> Báo cáo</a></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="auth.logout()">🚪 Đăng xuất (<span id="tenUser"></span>)</button>
     </div>
+  </aside>
 
-    <div class="card">
-        <h2>Danh Sách Lớp Học Phần</h2>
-        <table>
-            <thead>
+  <div class="main">
+    <header class="header"><div class="header-title">🏫 Quản lý Lớp Học phần</div></header>
+    <main class="content">
+      <h1 class="page-title">🏫 Danh sách Lớp Học phần</h1>
+
+      <!-- Filter + Thêm -->
+      <div class="search-bar">
+        <select id="selHocKy" class="form-control" style="min-width:200px" onchange="loadLHP()">
+          <option value="">-- Tất cả học kỳ --</option>
+        </select>
+        <select id="selTrangThai" class="form-control" style="max-width:160px" onchange="loadLHP()">
+          <option value="">-- Tất cả trạng thái --</option>
+          <option value="Đang mở">Đang mở</option>
+          <option value="Đã đầy">Đã đầy</option>
+          <option value="Đã đóng">Đã đóng</option>
+          <option value="Đã hủy">Đã hủy</option>
+        </select>
+        <button class="btn btn-primary" onclick="openFormThem()">+ Mở lớp mới</button>
+      </div>
+
+      <!-- Chú thích badge sĩ số -->
+      <div style="display:flex;gap:12px;margin-bottom:12px;font-size:.8rem;color:var(--text-muted);align-items:center;flex-wrap:wrap">
+        <span>Sĩ số còn lại:</span>
+        <span><span class="badge badge-green">Xanh</span> &gt;50% còn chỗ</span>
+        <span><span class="badge badge-yellow">Vàng</span> 20–50% còn chỗ</span>
+        <span><span class="badge badge-red">Đỏ</span> &lt;20% còn chỗ (gần đầy)</span>
+      </div>
+
+      <!-- Bảng LHP -->
+      <div class="card">
+        <div class="card-body" style="padding:0">
+          <div class="table-wrapper">
+            <table class="table table-striped table-hover">
+              <thead>
                 <tr>
-                    <th>Mã Lớp</th><th>Tên Học Phần</th><th>Phòng</th><th>Thứ/Tiết</th><th>Sĩ Số (Badge)</th><th>Thao Tác</th>
+                  <th>Mã lớp</th>
+                  <th>Học phần</th>
+                  <th style="text-align:center">TC</th>
+                  <th>Giảng viên</th>
+                  <th style="text-align:center">Lịch</th>
+                  <th>Phòng</th>
+                  <th style="text-align:center">Sĩ số</th>
+                  <th style="text-align:center">Trạng thái</th>
+                  <th style="text-align:center">Thao tác</th>
                 </tr>
-            </thead>
-            <tbody id="dsLop"></tbody>
-        </table>
+              </thead>
+              <tbody id="tbodyLHP">
+                <tr><td colspan="9" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-footer" id="paginationWrap"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal Mở lớp mới -->
+<div id="modalLHP" class="modal-overlay">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <h5 id="modalLHPTitle">🏫 Mở lớp học phần mới</h5>
+      <button class="modal-close" onclick="closeModal('modalLHP')">✕</button>
     </div>
+    <div class="modal-body">
+      <input type="hidden" id="editMaLHP" />
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label class="form-label required">Mã lớp HP</label>
+          <input type="text" id="fMaLHP" class="form-control" placeholder="VD: LHP_121000_01" maxlength="20" />
+        </div>
+        <div class="form-group">
+          <label class="form-label required">Học kỳ</label>
+          <select id="fMaHK" class="form-control"></select>
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label class="form-label required">Học phần</label>
+          <select id="fMaHP" class="form-control">
+            <option value="">-- Chọn học phần --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label required">Giảng viên</label>
+          <select id="fMaGV" class="form-control">
+            <option value="">-- Chọn giảng viên --</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row cols-3">
+        <div class="form-group">
+          <label class="form-label required">Thứ học</label>
+          <select id="fThu" class="form-control">
+            <option value="2">Thứ 2</option>
+            <option value="3">Thứ 3</option>
+            <option value="4">Thứ 4</option>
+            <option value="5">Thứ 5</option>
+            <option value="6">Thứ 6</option>
+            <option value="7">Thứ 7</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label required">Tiết bắt đầu</label>
+          <input type="number" id="fTietBD" class="form-control" min="1" max="12" placeholder="1–12" />
+        </div>
+        <div class="form-group">
+          <label class="form-label required">Số tiết</label>
+          <input type="number" id="fSoTiet" class="form-control" min="1" max="6" placeholder="1–6" />
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label class="form-label">Phòng học</label>
+          <input type="text" id="fPhong" class="form-control" placeholder="VD: A101" />
+        </div>
+        <div class="form-group">
+          <label class="form-label required">Sĩ số tối đa</label>
+          <input type="number" id="fSiSo" class="form-control" value="50" min="10" max="200" />
+        </div>
+      </div>
+      <!-- Preview lịch học -->
+      <div id="previewLich" style="background:#f8fafc;padding:10px 14px;border-radius:var(--radius-sm);font-size:.85rem;color:var(--text-muted);display:none">
+        📅 <strong>Lịch học dự kiến:</strong> <span id="lichText"></span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalLHP')">Hủy</button>
+      <button class="btn btn-primary" id="btnSaveLHP" onclick="saveLHP()">💾 Tạo lớp</button>
+    </div>
+  </div>
+</div>
 
-    <script>
-        const API_BASE_URL = 'http://localhost:3000/api';
+<!-- Modal Mở vào HK -->
+<div id="modalMoLop" class="modal-overlay">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h5>📅 Mở lớp vào học kỳ</h5>
+      <button class="modal-close" onclick="closeModal('modalMoLop')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Mở lớp <strong id="moLopName"></strong> vào học kỳ:</p>
+      <div class="form-group" style="margin-top:12px">
+        <select id="selHKMo" class="form-control"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalMoLop')">Hủy</button>
+      <button class="btn btn-success" onclick="confirmMoLop()">✅ Mở lớp</button>
+    </div>
+  </div>
+</div>
 
-        async function loadHocPhan() {
-            try {
-                const res = await fetch(`${API_BASE_URL}/hoc-phan`);
-                const result = await res.json();
-                const hocPhans = result.data || result;
-                const select = document.getElementById('MaHP');
-                if (hocPhans && hocPhans.length > 0) {
-                    select.innerHTML = hocPhans.map(hp => `<option value="${hp.MaHP}">${hp.TenHP}</option>`).join('');
-                } else {
-                    select.innerHTML = '<option value="">Không có dữ liệu học phần</option>';
-                }
-            } catch (err) {
-                document.getElementById('MaHP').innerHTML = '<option value="">Lỗi kết nối server (Cổng 3000)</option>';
-            }
-        }
+<div id="toast"></div>
 
-        async function loadLopHocPhan() {
-            try {
-                const res = await fetch(`${API_BASE_URL}/lop-hoc-phan`);
-                const result = await res.json();
-                const lops = result.data || result;
-                const tbody = document.getElementById('dsLop');
-                
-                tbody.innerHTML = lops.map(l => {
-                    // TỰ TÍNH PHẦN TRĂM TẠI ĐÂY ĐỂ FIX LỖI "ĐỎ TOÀN TẬP"
-                    const phanTram = (l.SiSoHienTai / l.SiSoToiDa) * 100;
-                    
-                    let badgeClass = 'bg-danger'; // Mặc định Đỏ (< 20%)
-                    if (phanTram > 50) {
-                        badgeClass = 'bg-success'; // Màu Xanh: Khi sĩ số > 50%
-                    } else if (phanTram >= 20) {
-                        badgeClass = 'bg-warning'; // Màu Vàng: Khi sĩ số từ 20% đến 50%
-                    } else {
-                        badgeClass = 'bg-danger';  // Màu Đỏ: Khi sĩ số < 20%
-             }
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/api.js"></script>
+<script>
+auth.requireAuth(['Admin']);
 
-                    return `
-                        <tr>
-                            <td>${l.MaLHP}</td>
-                            <td>${l.TenHP || 'N/A'}</td>
-                            <td>${l.PhongHoc}</td>
-                            <td>Thứ ${l.ThuHoc}, Tiết ${l.TietBatDau}</td>
-                            <td><span class="badge ${badgeClass}">${l.SiSoHienTai}/${l.SiSoToiDa}</span></td>
-                            <td><button class="btn-close" onclick="dongLop('${l.MaLHP}')">Đóng Lớp</button></td>
-                        </tr>
-                    `;
-                }).join('');
-            } catch (err) {
-                console.error("Lỗi load danh sách lớp:", err);
-            }
-        }
+let currentPage = 1;
+const LIMIT = 20;
+let pendingMoMaLHP  = null;
 
-        document.getElementById('formMoLop').onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = {
-                MaLHP: document.getElementById('MaLHP').value,
-                MaHP: document.getElementById('MaHP').value,
-                MaGV: document.getElementById('MaGV').value,
-                PhongHoc: document.getElementById('PhongHoc').value,
-                ThuHoc: parseInt(document.getElementById('ThuHoc').value),
-                TietBatDau: parseInt(document.getElementById('TietBatDau').value),
-                SoTiet: parseInt(document.getElementById('SoTiet').value),
-                SiSoToiDa: parseInt(document.getElementById('SiSoToiDa').value),
-                MaHocKy: document.getElementById('MaHocKy').value
-            };
+// ── Helpers ──────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = type; t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3500);
+}
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-            try {
-                const res = await fetch(`${API_BASE_URL}/lop-hoc-phan/add`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-                const result = await res.json();
-                if(result.success) {
-                    alert('Mở lớp thành công!');
-                    loadLopHocPhan();
-                    e.target.reset();
-                } else {
-                    alert('Lỗi: ' + result.error);
-                }
-            } catch (err) {
-                alert('Không thể kết nối đến server!');
-            }
-        };
+// Tính màu badge sĩ số
+function siSoBadge(henTai, toiDa) {
+  const pct = henTai / toiDa;
+  const cls  = pct < 0.5 ? 'badge-green' : pct < 0.8 ? 'badge-yellow' : 'badge-red';
+  return `<span class="badge ${cls}">${henTai}/${toiDa}</span>
+          <br><small style="color:var(--text-muted)">Còn ${toiDa - henTai}</small>`;
+}
 
-        async function dongLop(id) {
-            if(confirm('Bạn có chắc muốn đóng lớp này?')) {
-                try {
-                    const res = await fetch(`${API_BASE_URL}/lop-hoc-phan/dong/${id}`, { method: 'POST' });
-                    const result = await res.json();
-                    if(result.success) {
-                        alert('Đã đóng lớp thành công!');
-                        loadLopHocPhan();
-                    }
-                } catch (err) {
-                    alert('Lỗi khi thực hiện đóng lớp!');
-                }
-            }
-        }
+function trangThaiBadge(ts) {
+  const map = {
+    'Đang mở': 'ts-mo', 'Đã đầy': 'ts-day', 'Đã đóng': 'ts-dong', 'Đã hủy': 'ts-huy'
+  };
+  return `<span class="trang-thai-badge ${map[ts] || ''}">${ts}</span>`;
+}
 
-        window.onload = () => {
-            loadHocPhan();
-            loadLopHocPhan();
-        };
-    </script>
+// ── Load học kỳ & dữ liệu chọn ──────────────────────────────
+let allHK = [], allHPList = [], allGVList = [];
+
+async function loadDropdowns() {
+  try {
+    const [hkRes, hpRes, gvRes] = await Promise.all([
+      api.get('/hoc-ky'),
+      api.get('/hoc-phan?limit=500'),
+      api.get('/giang-vien?limit=200'),
+    ]);
+    allHK     = hkRes.data;
+    allHPList = hpRes.data;
+    allGVList = gvRes.data;
+
+    // Dropdown filter
+    const selHK = document.getElementById('selHocKy');
+    allHK.forEach(hk => {
+      const o = document.createElement('option');
+      o.value = hk.MaHocKy; o.textContent = hk.TenHocKy;
+      selHK.appendChild(o);
+    });
+
+    // Dropdowns trong form
+    const fHK = document.getElementById('fMaHK');
+    allHK.forEach(hk => {
+      const o = document.createElement('option');
+      o.value = hk.MaHocKy; o.textContent = hk.TenHocKy;
+      fHK.appendChild(o);
+    });
+
+    const fHP = document.getElementById('fMaHP');
+    allHPList.forEach(hp => {
+      const o = document.createElement('option');
+      o.value = hp.MaHP; o.textContent = `${hp.MaHP} – ${hp.TenHP} (${hp.SoTinChi}TC)`;
+      fHP.appendChild(o);
+    });
+
+    const fGV = document.getElementById('fMaGV');
+    allGVList.forEach(gv => {
+      const o = document.createElement('option');
+      o.value = gv.MaGV; o.textContent = `${gv.HoTen} (${gv.HocVi || 'GV'})`;
+      fGV.appendChild(o);
+    });
+
+    // Dropdown modal mở lớp
+    const selHKMo = document.getElementById('selHKMo');
+    allHK.filter(hk => ['Chưa mở','Đang mở đăng ký'].includes(hk.TrangThai))
+      .forEach(hk => {
+        const o = document.createElement('option');
+        o.value = hk.MaHocKy; o.textContent = hk.TenHocKy;
+        selHKMo.appendChild(o);
+      });
+  } catch (e) { console.error('Lỗi load dropdowns:', e.message); }
+}
+
+// Preview lịch học
+['fThu','fTietBD','fSoTiet'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updatePreview);
+});
+function updatePreview() {
+  const thu  = document.getElementById('fThu').value;
+  const tBD  = parseInt(document.getElementById('fTietBD').value);
+  const so   = parseInt(document.getElementById('fSoTiet').value);
+  const pre  = document.getElementById('previewLich');
+  const txt  = document.getElementById('lichText');
+  if (thu && tBD && so) {
+    const thuLabels = {2:'Thứ 2',3:'Thứ 3',4:'Thứ 4',5:'Thứ 5',6:'Thứ 6',7:'Thứ 7'};
+    txt.textContent = `${thuLabels[thu]}, Tiết ${tBD} → ${tBD + so - 1}`;
+    pre.style.display = 'block';
+  } else {
+    pre.style.display = 'none';
+  }
+}
+
+// ── Load bảng LHP ────────────────────────────────────────────
+async function loadLHP(page = 1) {
+  currentPage = page;
+  const maHK      = document.getElementById('selHocKy').value;
+  const trangThai = document.getElementById('selTrangThai').value;
+  const tbody = document.getElementById('tbodyLHP');
+  tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>`;
+
+  try {
+    const ep = `/lop-hoc-phan?page=${page}&limit=${LIMIT}&maHK=${encodeURIComponent(maHK)}&trangThai=${encodeURIComponent(trangThai)}`;
+    const res = await api.get(ep);
+    renderLHP(res.data);
+    renderPagination(res.total, res.page, res.totalPages);
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:24px">Lỗi: ${e.message}</td></tr>`;
+  }
+}
+
+function renderLHP(data) {
+  const tbody = document.getElementById('tbodyLHP');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📭</div><p>Không có lớp nào</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td><code>${r.MaLHP}</code><br><small style="color:var(--text-muted)">${r.TenHocKy || '–'}</small></td>
+      <td><strong>${r.TenHP}</strong><br><small style="color:var(--text-muted)">${r.MaHP}</small></td>
+      <td style="text-align:center">${r.SoTinChi}</td>
+      <td>${r.TenGV}<br><small style="color:var(--text-muted)">${r.HocVi || ''}</small></td>
+      <td style="text-align:center">
+        Thứ ${r.ThuHoc}<br>
+        <small>Tiết ${r.TietBatDau}–${r.TietBatDau + r.SoTiet - 1}</small>
+      </td>
+      <td>${r.PhongHoc || '<span style="color:var(--text-muted)">–</span>'}</td>
+      <td style="text-align:center">${siSoBadge(r.SiSoHienTai, r.SiSoToiDa)}</td>
+      <td style="text-align:center">${trangThaiBadge(r.TrangThai)}</td>
+      <td style="text-align:center;white-space:nowrap">
+        ${r.TrangThai === 'Đang mở' || r.TrangThai === 'Đã đầy'
+          ? `<button class="btn btn-danger btn-sm" onclick="dongLop('${r.MaLHP}','${r.TenHP}')">🔒 Đóng</button>`
+          : `<button class="btn btn-success btn-sm" onclick="moLop('${r.MaLHP}','${r.TenHP}')">🔓 Mở</button>`}
+        <button class="btn btn-danger btn-sm btn-icon" title="Xóa"
+          onclick="xoaLop('${r.MaLHP}','${r.TenHP}','${r.SiSoHienTai}')">🗑</button>
+      </td>
+    </tr>`).join('');
+}
+
+function renderPagination(total, page, totalPages) {
+  const wrap = document.getElementById('paginationWrap');
+  if (totalPages <= 1) { wrap.innerHTML = ''; return; }
+  let html = `<div class="pagination">`;
+  html += `<button class="page-btn" ${page<=1?'disabled':''} onclick="loadLHP(${page-1})">←</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i-page) <= 2) {
+      html += `<button class="page-btn ${i===page?'active':''}" onclick="loadLHP(${i})">${i}</button>`;
+    } else if (Math.abs(i-page) === 3) html += `<span style="padding:0 4px">…</span>`;
+  }
+  html += `<button class="page-btn" ${page>=totalPages?'disabled':''} onclick="loadLHP(${page+1})">→</button>`;
+  html += `<span style="font-size:.8rem;color:var(--text-muted);margin-left:8px">Tổng ${total} lớp</span></div>`;
+  wrap.innerHTML = html;
+}
+
+// ── Mở form tạo lớp mới ──────────────────────────────────────
+function openFormThem() {
+  document.getElementById('modalLHPTitle').textContent = '🏫 Mở lớp học phần mới';
+  document.getElementById('editMaLHP').value = '';
+  document.getElementById('fMaLHP').value    = '';
+  document.getElementById('fMaLHP').disabled = false;
+  document.getElementById('fTietBD').value   = '';
+  document.getElementById('fSoTiet').value   = '';
+  document.getElementById('fPhong').value    = '';
+  document.getElementById('fSiSo').value     = '50';
+  document.getElementById('previewLich').style.display = 'none';
+  openModal('modalLHP');
+}
+
+// ── Tạo lớp mới ──────────────────────────────────────────────
+async function saveLHP() {
+  const maLHP     = document.getElementById('fMaLHP').value.trim().toUpperCase();
+  const maHocKy   = document.getElementById('fMaHK').value;
+  const maHP      = document.getElementById('fMaHP').value;
+  const maGV      = document.getElementById('fMaGV').value;
+  const thuHoc    = parseInt(document.getElementById('fThu').value);
+  const tietBatDau= parseInt(document.getElementById('fTietBD').value);
+  const soTiet    = parseInt(document.getElementById('fSoTiet').value);
+  const phongHoc  = document.getElementById('fPhong').value.trim();
+  const siSoToiDa = parseInt(document.getElementById('fSiSo').value);
+
+  if (!maLHP || !maHP || !maGV || !tietBatDau || !soTiet) {
+    return showToast('Vui lòng điền đầy đủ thông tin bắt buộc.', 'error');
+  }
+
+  const btn = document.getElementById('btnSaveLHP');
+  btn.disabled = true; btn.textContent = '⏳';
+
+  try {
+    await api.post('/lop-hoc-phan', {
+      maLHP, maHP, maGV, maHocKy: maHocKy || null,
+      phongHoc: phongHoc || null, thuHoc, tietBatDau, soTiet, siSoToiDa,
+    });
+    showToast(`✅ Tạo lớp "${maLHP}" thành công.`);
+    closeModal('modalLHP');
+    await loadLHP(currentPage);
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Tạo lớp';
+  }
+}
+
+// ── Mở lớp vào HK ────────────────────────────────────────────
+function moLop(maLHP, tenHP) {
+  pendingMoMaLHP = maLHP;
+  document.getElementById('moLopName').textContent = `${maLHP} – ${tenHP}`;
+  openModal('modalMoLop');
+}
+
+async function confirmMoLop() {
+  const maHK = document.getElementById('selHKMo').value;
+  if (!maHK) return showToast('Chọn học kỳ để mở lớp.', 'error');
+  closeModal('modalMoLop');
+  try {
+    await api.post(`/lop-hoc-phan/${pendingMoMaLHP}/mo`, { maHK });
+    showToast(`✅ Mở lớp "${pendingMoMaLHP}" thành công.`);
+    await loadLHP(currentPage);
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  }
+}
+
+// ── Đóng lớp ─────────────────────────────────────────────────
+async function dongLop(maLHP, tenHP) {
+  if (!confirm(`Đóng lớp "${tenHP}" (${maLHP})?`)) return;
+  try {
+    await api.post(`/lop-hoc-phan/${maLHP}/dong`);
+    showToast(`✅ Đã đóng lớp "${maLHP}".`);
+    await loadLHP(currentPage);
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  }
+}
+
+// ── Xóa lớp ──────────────────────────────────────────────────
+async function xoaLop(maLHP, tenHP, siSoHienTai) {
+  if (parseInt(siSoHienTai) > 0) {
+    return showToast(`❌ Không thể xóa: lớp có ${siSoHienTai} SV đang đăng ký.`, 'error');
+  }
+  if (!confirm(`Xóa lớp "${maLHP} – ${tenHP}"? Thao tác không thể hoàn tác.`)) return;
+  try {
+    await api.del(`/lop-hoc-phan/${maLHP}`);
+    showToast(`✅ Đã xóa lớp "${maLHP}".`);
+    await loadLHP(currentPage);
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  }
+}
+
+// ── Khởi chạy ────────────────────────────────────────────────
+(async () => {
+  await loadDropdowns();
+  await loadLHP();
+})();
+</script>
 </body>
 </html>
