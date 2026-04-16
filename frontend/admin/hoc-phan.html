@@ -7,6 +7,27 @@
   <link rel="stylesheet" href="/assets/css/style.css" />
   <link rel="stylesheet" href="/assets/css/components.css" />
   <style>
+    /* ===== TÁI SỬ DỤNG LAYOUT DASHBOARD ===== */
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 250px; flex-shrink: 0; background: var(--primary); display: flex; flex-direction: column; box-shadow: 2px 0 8px rgba(0, 0, 0, .2); position: relative; height: auto; }
+    .sidebar-brand { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+    .sidebar-brand h2 { color: #fff; font-size: 15px; font-weight: 700; line-height: 1.4; margin: 0; }
+    .sidebar-brand span { color: #a8c7e8; font-size: 12px; }
+    .sidebar-nav { flex: 1; padding: 16px 0; }
+    .nav-section { padding: 8px 20px 4px; font-size: 10px; font-weight: 700; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 20px; color: rgba(255, 255, 255, 0.75); text-decoration: none; font-size: 14px; transition: all .15s; border-left: 3px solid transparent; }
+    .nav-item:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+    .nav-item.active { background: rgba(46, 117, 182, 0.4); color: #fff; border-left-color: var(--primary-light); }
+    
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background-color: #f8fafc; margin-left: 0; }
+    .topbar { background: #fff; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; position: relative; z-index: 10; height: auto;}
+    .topbar h1 { font-size: 18px; color: #1e293b; font-weight: 700; margin: 0; }
+    .user-profile { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 35px; height: 35px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    
+    .content-body { padding: 28px; overflow-y: auto; flex: 1; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
     /* Multi-select tiên quyết */
     .multi-select-wrap {
       border: 1.5px solid var(--border);
@@ -42,40 +63,53 @@
 <body>
 <div class="layout">
 
-  <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="sidebar-brand"><h4>🎓 UTH – ĐKHP</h4><small>Quản trị hệ thống</small></div>
+    <div class="sidebar-brand">
+      <h2>🎓 UTH – ĐKHP</h2>
+      <span>Quản trị hệ thống</span>
+    </div>
     <nav class="sidebar-nav">
-      <ul>
-        <li><a href="/admin/dashboard.html">    <span class="icon">📊</span> Dashboard</a></li>
-        <li><a href="/admin/sinh-vien.html">    <span class="icon">👨‍🎓</span> Sinh viên</a></li>
-        <li><a href="/admin/giang-vien.html">   <span class="icon">👨‍🏫</span> Giảng viên</a></li>
-        <li><a href="/admin/hoc-ky.html">       <span class="icon">📅</span> Học kỳ</a></li>
-        <li><a href="/admin/hoc-phan.html" class="active"><span class="icon">📚</span> Học phần</a></li>
-        <li><a href="/admin/lop-hoc-phan.html"> <span class="icon">🏫</span> Lớp HP</a></li>
-        <li><a href="/admin/bao-cao.html">      <span class="icon">📈</span> Báo cáo</a></li>
-      </ul>
+      <div class="nav-section">Tổng quan</div>
+      <a href="/admin/dashboard.html" class="nav-item">📊 Dashboard</a>
+
+      <div class="nav-section">Quản lý dữ liệu</div>
+      <a href="/admin/sinh-vien.html" class="nav-item">👩‍🎓 Sinh viên</a>
+      <a href="/admin/giang-vien.html" class="nav-item">👨‍🏫 Giảng viên</a>
+      <a href="/admin/hoc-phan.html" class="nav-item active">📚 Học phần</a>
+      <a href="/admin/lop-hoc-phan.html" class="nav-item">🏫 Lớp học phần</a>
+      <a href="/admin/hoc-ky.html" class="nav-item">📅 Học kỳ</a>
+
+      <div class="nav-section">Báo cáo</div>
+      <a href="/admin/bao-cao.html" class="nav-item">📈 Thống kê & Báo cáo</a>
     </nav>
-    <div class="sidebar-footer">
-      <button class="btn-logout" onclick="auth.logout()">🚪 Đăng xuất (<span id="tenUser"></span>)</button>
+    <div class="sidebar-footer" style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+      <button class="btn-logout" onclick="auth.logout()"
+        style="width:100%; padding: 10px; background: #c00000; border:none; color:white; border-radius:5px; cursor:pointer;">🚪
+        Đăng xuất</button>
     </div>
   </aside>
 
-  <!-- Main -->
   <div class="main">
-    <header class="header">
-      <div class="header-title">📚 Quản lý Học phần</div>
+    <header class="topbar">
+      <h1>📚 Quản lý Học phần</h1>
+      <div class="user-profile">
+        <div class="avatar">A</div>
+        <span id="tenUser" style="font-weight: 600; color: #1e293b;">Admin</span>
+      </div>
     </header>
-    <main class="content">
-      <h1 class="page-title">📚 Danh sách Học phần</h1>
-
-      <!-- Search + Add -->
-      <div class="search-bar">
-        <input type="text" id="searchInput" class="form-control" placeholder="🔎 Tìm theo tên hoặc mã HP..." oninput="filterLocal()" />
-        <select id="selKhoa" class="form-control" style="max-width:200px" onchange="loadHP()">
-          <option value="">-- Tất cả khoa --</option>
-        </select>
-        <button class="btn btn-primary" onclick="openFormThem()">+ Thêm học phần</button>
+    <main class="content-body">
+      <div class="page-header" style="flex-wrap: wrap; gap: 15px;">
+        <div>
+          <h2 style="margin: 0; font-size: 20px; color: #0f172a;">Danh sách Học phần</h2>
+          <p style="margin: 4px 0 0; color: #64748b; font-size: 14px;">Xem, thêm, sửa, xóa thông tin học phần</p>
+        </div>
+        <div class="search-bar" style="display: flex; gap: 10px; margin: 0;">
+          <input type="text" id="searchInput" class="form-control" placeholder="🔎 Tìm theo tên hoặc mã HP..." oninput="filterLocal()" />
+          <select id="selKhoa" class="form-control" style="max-width:200px" onchange="loadHP()">
+            <option value="">-- Tất cả khoa --</option>
+          </select>
+          <button class="btn btn-primary" onclick="openFormThem()" style="white-space: nowrap;">+ Thêm học phần</button>
+        </div>
       </div>
 
       <!-- Bảng HP -->
@@ -178,6 +212,7 @@
 <script src="/assets/js/api.js"></script>
 <script>
 auth.requireAuth(['Admin']);
+document.getElementById('tenUser').textContent = auth.getUser()?.hoTen || 'Admin';
 
 let allHP   = [];   // cache toàn bộ HP từ server
 let allKhoa = [];   // cache danh sách khoa
