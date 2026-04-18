@@ -160,6 +160,64 @@ END;
 DELIMITER ;
 
 -- ============================================================
+-- SP 4: sp_ThongKeDangKy  ← Báo cáo thống kê (BaoCaoService dùng)
+-- Mục đích : Thống kê tình hình đăng ký từng lớp học phần
+--            gồm: số ĐK, số đạt/rớt/chưa điểm, điểm TB lớp, tỉ lệ lấp đầy
+-- Tham số  : p_maHK CHAR(10) – NULL = tất cả học kỳ
+-- Trả về   : Bảng thống kê sắp xếp theo TenHocKy → TenHP
+-- ============================================================
+
+DROP PROCEDURE IF EXISTS sp_ThongKeDangKy;
+
+DELIMITER //
+
+CREATE PROCEDURE sp_ThongKeDangKy(
+    IN p_maHK CHAR(10)  -- NULL = tất cả học kỳ
+)
+BEGIN
+    SELECT
+        lhp.MaLHP,
+        lhp.MaHocKy,
+        hk.TenHocKy,
+        hp.MaHP,
+        hp.TenHP,
+        hp.SoTinChi,
+        gv.HoTen                                                           AS TenGV,
+        lhp.PhongHoc,
+        lhp.ThuHoc,
+        lhp.TietBatDau,
+        (lhp.TietBatDau + lhp.SoTiet - 1)                                 AS TietKetThuc,
+        lhp.SiSoToiDa,
+        lhp.SiSoHienTai,
+        ROUND(lhp.SiSoHienTai * 100.0 / NULLIF(lhp.SiSoToiDa, 0), 1)    AS TiLeLapDay,
+        lhp.TrangThai,
+        COUNT(dk.MaDK)                                                     AS SoDangKy,
+        COUNT(CASE WHEN d.XepLoai IN ('A','B','C','D') THEN 1 END)        AS SoDat,
+        COUNT(CASE WHEN d.XepLoai = 'F'                THEN 1 END)        AS SoRot,
+        COUNT(CASE WHEN dk.MaDK IS NOT NULL AND d.MaDiem IS NULL THEN 1 END) AS ChuaCoDiem,
+        ROUND(AVG(CASE WHEN d.DiemTK IS NOT NULL THEN d.DiemTK END), 2)   AS DiemTBLop
+    FROM LopHocPhan lhp
+    JOIN HocPhan    hp  ON lhp.MaHP    = hp.MaHP
+    JOIN GiangVien  gv  ON lhp.MaGV   = gv.MaGV
+    JOIN HocKy      hk  ON lhp.MaHocKy = hk.MaHocKy
+    LEFT JOIN DangKyHocPhan dk
+           ON lhp.MaLHP  = dk.MaLHP
+          AND dk.TrangThai = 'Đã đăng ký'
+    LEFT JOIN Diem d ON dk.MaDK = d.MaDK
+    WHERE (p_maHK IS NULL OR lhp.MaHocKy = p_maHK)
+    GROUP BY
+        lhp.MaLHP, lhp.MaHocKy, hk.TenHocKy,
+        hp.MaHP, hp.TenHP, hp.SoTinChi,
+        gv.HoTen, lhp.PhongHoc, lhp.ThuHoc,
+        lhp.TietBatDau, lhp.SoTiet,
+        lhp.SiSoToiDa, lhp.SiSoHienTai, lhp.TrangThai
+    ORDER BY hk.TenHocKy, hp.TenHP, lhp.MaLHP;
+END;
+//
+
+DELIMITER ;
+
+-- ============================================================
 -- TEST SCRIPT – Thay EXEC bằng CALL (cú pháp MySQL)
 -- ============================================================
 
