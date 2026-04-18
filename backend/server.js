@@ -1,13 +1,7 @@
-/**
- * server.js - Diem khoi chay chinh
- * TV-02 phu trach
- */
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const express = require('express');
 const cors = require('cors');
 
-const hocPhanRoutes = require('./routes/hocPhanRoutes');
-const lopHocPhanRoutes = require('./routes/lopHocPhanRoutes');
 const { connectDB } = require('./config/db');
 
 const app = express();

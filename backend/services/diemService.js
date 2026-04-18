@@ -1,6 +1,3 @@
-// backend/services/diemService.js
-// TV-04  |  Task 3 (GET+PUT điểm) & Task 4 (GPA)
-//
 // QUAN TRỌNG:
 //   DiemTK  = DiemQT * 0.4 + DiemThi * 0.6  → COMPUTED COLUMN trong SQL Server
 //   XepLoai = A/B/C/D/F                      → COMPUTED COLUMN trong SQL Server
@@ -31,7 +28,7 @@ async function getBangDiem(maSV, maHK = null) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK 3 – GV nhập điểm (DiemQT + DiemThi)
-// SQL Server tự tính DiemTK và XepLoai qua Computed Column
+// MySQL tự tính DiemTK và XepLoai qua Generated Column (STORED)
 // ─────────────────────────────────────────────────────────────────────────────
 async function nhapDiem(maDK, diemQT, diemThi) {
   // Validate range
@@ -55,7 +52,7 @@ async function nhapDiem(maDK, diemQT, diemThi) {
   }
 
   // UPSERT – chỉ INSERT/UPDATE DiemQT và DiemThi
-  // DiemTK, XepLoai do SQL Server tự tính (PERSISTED COMPUTED COLUMN)
+  // DiemTK, XepLoai do MySQL tự tính (GENERATED ALWAYS STORED)
   await execQuery(
     `INSERT INTO Diem (MaDK, DiemQT, DiemThi)
      VALUES (:maDK, :dq, :dt)

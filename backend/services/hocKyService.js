@@ -1,44 +1,53 @@
-const db = require('../database/db'); // Đảm bảo đường dẫn này đúng với file kết nối DB của bạn
+// Sửa lỗi: import đúng path, dùng đúng API execQuery của mysql2/promise pool
+
+const { execQuery } = require('../config/db'); // Đúng path (thay '../database/db')
 
 const hocKyService = {
     // 1. Lấy toàn bộ danh sách học kỳ
     getAllHocKy: async () => {
-        try {
-            // QUAN TRỌNG: Tên bảng phải là 'hocky' khớp với MySQL Workbench
-            const [rows] = await db.query("SELECT * FROM hocky"); 
-            return rows;
-        } catch (error) {
-            console.error("Lỗi tại getAllHocKy Service:", error);
-            throw error;
-        }
+        // Dùng đúng tên bảng PascalCase theo schema
+        return execQuery('SELECT * FROM HocKy ORDER BY NamHoc DESC, HocKySo DESC');
     },
 
-    // 2. Cập nhật trạng thái học kỳ (Logic Task 6)
+    // 2. Cập nhật trạng thái học kỳ
+    // - Sửa: không dùng db.getConnection() nữa; dùng execQuery thay thế
     updateStatus: async (maHK, targetStatus) => {
-        const connection = await db.getConnection();
-        try {
-            await connection.beginTransaction();
-
-            // Nếu muốn mở một học kỳ, phải đóng tất cả các học kỳ khác trước (Chỉ duy nhất 1 HK mở)
-            if (targetStatus === 'Đang mở đăng ký') {
-                await connection.query("UPDATE hocky SET TrangThai = 'Đã đóng'");
-            }
-
-            // Cập nhật trạng thái cho học kỳ cụ thể
-            const [result] = await connection.query(
-                "UPDATE hocky SET TrangThai = ? WHERE MaHocKy = ?",
-                [targetStatus, maHK]
+        // Validate targetStatus theo CHECK constraint trong schema
+        const validStatuses = ['Chưa mở', 'Đang mở đăng ký', 'Đã đóng đăng ký', 'Đang học', 'Kết thúc'];
+        if (!validStatuses.includes(targetStatus)) {
+            throw Object.assign(
+                new Error(`Trạng thái không hợp lệ: "${targetStatus}".`),
+                { status: 400 }
             );
-
-            await connection.commit();
-            return result;
-        } catch (error) {
-            await connection.rollback();
-            console.error("Lỗi tại updateStatus Service:", error);
-            throw error;
-        } finally {
-            connection.release();
         }
+
+        // Kiểm tra chỉ 1 HK mở tại một thời điểm
+        if (targetStatus === 'Đang mở đăng ký') {
+            const active = await execQuery(
+                "SELECT MaHocKy FROM HocKy WHERE TrangThai = 'Đang mở đăng ký' AND MaHocKy != ?",
+                [maHK]
+            );
+            if (active.length > 0) {
+                throw Object.assign(
+                    new Error(`Học kỳ "${active[0].MaHocKy}" đang mở đăng ký. Chỉ được phép 1 học kỳ mở tại một thời điểm.`),
+                    { status: 400 }
+                );
+            }
+        }
+
+        const result = await execQuery(
+            'UPDATE HocKy SET TrangThai = ? WHERE MaHocKy = ?',
+            [targetStatus, maHK]
+        );
+
+        if (result.affectedRows === 0) {
+            throw Object.assign(
+                new Error(`Không tìm thấy học kỳ "${maHK}".`),
+                { status: 404 }
+            );
+        }
+
+        return { message: 'Cập nhật trạng thái thành công.' };
     }
 };
 

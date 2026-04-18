@@ -1,117 +1,134 @@
--- ============================================================
--- FILE: database/stored_procs.sql  (phần TV-03)
--- TV-03  |  Task 3
--- DBMS:  SQL Server
--- Mô tả: 3 Stored Procedure quản lý Lớp Học Phần
---
 -- DANH SÁCH SP:
 --   1. sp_MoLopHocPhan   – Mở lớp cho một học kỳ
 --   2. sp_DongLopHocPhan – Đóng lớp
---   3. sp_LayLopConCho   – Lấy lớp còn chỗ theo HK (TV-04 dùng)
+--   3. sp_LayLopConCho   – Lấy lớp còn chỗ theo HK (dành cho SV đăng ký)
 --
--- TẠI SAO DÙNG STORED PROCEDURE?
---   - SP được compile và cache → truy vấn nhanh hơn query text thuần
+-- DÙNG STORED PROCEDURE
 --   - Logic tập trung ở DB → dễ bảo trì, tránh lặp code ở nhiều controller
 --   - Tránh SQL Injection tốt hơn (tham số hóa hoàn toàn)
---   - SET NOCOUNT ON: tắt thông báo "N row(s) affected" → giảm traffic
--- ============================================================
 
 USE QLDangKyHP;
-GO
 
 -- ============================================================
 -- SP 1: sp_MoLopHocPhan
 -- Mục đích : Gán học kỳ cho lớp và đổi TrangThai → 'Đang mở'
--- Tham số  : @maLHP CHAR(20), @maHK CHAR(10)
--- Trả về   : Bảng { KetQua, ThongBao }
--- Lỗi      : THROW 50001 nếu LHP không tồn tại
---            THROW 50002 nếu HK không hợp lệ để mở lớp
+-- Tham số  : p_maLHP CHAR(20), p_maHK CHAR(10)
+-- Trả về   : SELECT KetQua, ThongBao
+-- Lỗi      : SIGNAL '45000' nếu LHP không tồn tại
+--            SIGNAL '45000' nếu HK không hợp lệ để mở lớp
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_MoLopHocPhan
-    @maLHP  CHAR(20),
-    @maHK   CHAR(10)
-AS
+
+DROP PROCEDURE IF EXISTS sp_MoLopHocPhan;  -- Thay CREATE OR ALTER PROCEDURE
+
+DELIMITER //
+
+CREATE PROCEDURE sp_MoLopHocPhan(
+    IN p_maLHP  CHAR(20),  -- IN = tham số đầu vào (tương đương @ trong T-SQL)
+    IN p_maHK   CHAR(10)
+)
 BEGIN
-    SET NOCOUNT ON;
+    -- SET NOCOUNT ON; ← Không có trong MySQL
 
-    -- Kiểm tra lớp học phần tồn tại
-    IF NOT EXISTS (SELECT 1 FROM LopHocPhan WHERE MaLHP = @maLHP)
-        THROW 50001, N'Lớp học phần không tồn tại.', 1;
+    -- ── Kiểm tra lớp học phần tồn tại ────────────────────────
+    -- Thay: IF NOT EXISTS ... THROW 50001, N'...', 1;
+    IF NOT EXISTS (SELECT 1 FROM LopHocPhan WHERE MaLHP = p_maLHP) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Lớp học phần không tồn tại.';
+    END IF;
 
-    -- Kiểm tra học kỳ hợp lệ để mở lớp
-    -- (Chỉ mở lớp khi HK ở trạng thái 'Chưa mở' hoặc 'Đang mở đăng ký')
+    -- ── Kiểm tra học kỳ hợp lệ để mở lớp ────────────────────
+    -- N'Đang mở' → 'Đang mở' (MySQL utf8mb4 tự xử lý Unicode, không cần N prefix)
     IF NOT EXISTS (
         SELECT 1 FROM HocKy
-        WHERE  MaHocKy  = @maHK
-          AND  TrangThai IN (N'Chưa mở', N'Đang mở đăng ký')
-    )
-        THROW 50002, N'Học kỳ không ở trạng thái có thể mở lớp.', 1;
+        WHERE  MaHocKy  = p_maHK
+          AND  TrangThai IN ('Chưa mở', 'Đang mở đăng ký')
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Học kỳ không ở trạng thái có thể mở lớp.';
+    END IF;
 
-    -- Kiểm tra lớp chưa bị gán vào HK khác đang hoạt động
+    -- ── Kiểm tra lớp chưa bị gán vào HK khác đang hoạt động ─
     IF EXISTS (
         SELECT 1 FROM LopHocPhan
-        WHERE  MaLHP    = @maLHP
+        WHERE  MaLHP    = p_maLHP
           AND  MaHocKy IS NOT NULL
-          AND  MaHocKy  <> @maHK
-          AND  TrangThai IN (N'Đang mở', N'Đã đầy')
-    )
-        THROW 50004, N'Lớp này đang mở ở một học kỳ khác, không thể thay đổi.', 1;
+          AND  MaHocKy  <> p_maHK
+          AND  TrangThai IN ('Đang mở', 'Đã đầy')
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Lớp này đang mở ở một học kỳ khác, không thể thay đổi.';
+    END IF;
 
-    -- Cập nhật: gán HK và đổi trạng thái
+    -- ── Cập nhật: gán HK và đổi trạng thái ──────────────────
     UPDATE LopHocPhan
-    SET    TrangThai = N'Đang mở',
-           MaHocKy  = @maHK
-    WHERE  MaLHP = @maLHP;
+    SET    TrangThai = 'Đang mở',
+           MaHocKy  = p_maHK
+    WHERE  MaLHP = p_maLHP;
 
+    -- MySQL: SELECT trong procedure = result set trả về client
     SELECT 0             AS KetQua,
-           N'Mở lớp thành công.' AS ThongBao;
-END
-GO
+           'Mở lớp thành công.' AS ThongBao;
+END;
+//
+
+DELIMITER ;
 
 -- ============================================================
 -- SP 2: sp_DongLopHocPhan
 -- Mục đích : Đóng lớp học phần (TrangThai → 'Đã đóng')
--- Tham số  : @maLHP CHAR(20)
--- Trả về   : Bảng { KetQua, ThongBao }
--- Lỗi      : THROW 50003 nếu lớp không tồn tại hoặc đã đóng
+-- Tham số  : p_maLHP CHAR(20)
+-- Trả về   : SELECT KetQua, ThongBao
+-- Lỗi      : SIGNAL nếu lớp không tồn tại hoặc đã đóng/hủy
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_DongLopHocPhan
-    @maLHP CHAR(20)
-AS
+
+DROP PROCEDURE IF EXISTS sp_DongLopHocPhan;
+
+DELIMITER //
+
+CREATE PROCEDURE sp_DongLopHocPhan(
+    IN p_maLHP CHAR(20)
+)
 BEGIN
-    SET NOCOUNT ON;
+    DECLARE v_affected INT DEFAULT 0;
 
     -- Đóng lớp – chỉ đóng được khi đang ở trạng thái 'Đang mở' hoặc 'Đã đầy'
     UPDATE LopHocPhan
-    SET    TrangThai = N'Đã đóng'
-    WHERE  MaLHP     = @maLHP
-      AND  TrangThai IN (N'Đang mở', N'Đã đầy');
+    SET    TrangThai = 'Đã đóng'
+    WHERE  MaLHP     = p_maLHP
+      AND  TrangThai IN ('Đang mở', 'Đã đầy');
 
-    -- @@ROWCOUNT = 0 nghĩa là không có dòng nào được cập nhật
-    -- → lớp không tồn tại HOẶC đã ở trạng thái không thể đóng
-    IF @@ROWCOUNT = 0
-        THROW 50003,
-              N'Không thể đóng lớp (lớp không tồn tại hoặc đã đóng).',
-              1;
+    -- ROW_COUNT() thay thế @@ROWCOUNT của SQL Server
+    SET v_affected = ROW_COUNT();
 
-    SELECT 0                    AS KetQua,
-           N'Đóng lớp thành công.' AS ThongBao;
-END
-GO
+    -- v_affected = 0: lớp không tồn tại HOẶC đã ở trạng thái không thể đóng
+    IF v_affected = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Không thể đóng lớp (lớp không tồn tại hoặc đã đóng).';
+    END IF;
+
+    SELECT 0                       AS KetQua,
+           'Đóng lớp thành công.' AS ThongBao;
+END;
+//
+
+DELIMITER ;
 
 -- ============================================================
--- SP 3: sp_LayLopConCho  ← TV-04 cần để build trang đăng ký SV
+-- SP 3: sp_LayLopConCho  ← Dùng trong trang đăng ký của SV
 -- Mục đích : Trả danh sách lớp còn chỗ trong một HK
--- Tham số  : @maHK CHAR(10)
+-- Tham số  : p_maHK CHAR(10)
 -- Trả về   : Thông tin lớp kèm SoChoConLai, sắp xếp theo TenHP
 -- Điều kiện: TrangThai = 'Đang mở' VÀ SiSoHienTai < SiSoToiDa
 -- ============================================================
-CREATE OR ALTER PROCEDURE sp_LayLopConCho
-    @maHK CHAR(10)
-AS
-BEGIN
-    SET NOCOUNT ON;
 
+DROP PROCEDURE IF EXISTS sp_LayLopConCho;
+
+DELIMITER //
+
+CREATE PROCEDURE sp_LayLopConCho(
+    IN p_maHK CHAR(10)
+)
+BEGIN
     SELECT
         lhp.MaLHP,
         hp.MaHP,
@@ -133,36 +150,31 @@ BEGIN
     FROM   LopHocPhan lhp
     JOIN   HocPhan    hp  ON lhp.MaHP = hp.MaHP
     JOIN   GiangVien  gv  ON lhp.MaGV = gv.MaGV
-    WHERE  lhp.MaHocKy     = @maHK
-      AND  lhp.TrangThai   = N'Đang mở'
+    WHERE  lhp.MaHocKy     = p_maHK
+      AND  lhp.TrangThai   = 'Đang mở'
       AND  lhp.SiSoHienTai < lhp.SiSoToiDa
     ORDER  BY hp.TenHP, lhp.MaLHP;
-END
-GO
+END;
+//
+
+DELIMITER ;
 
 -- ============================================================
--- TEST SCRIPT – Chạy từng khối trên SSMS
+-- TEST SCRIPT – Thay EXEC bằng CALL (cú pháp MySQL)
 -- ============================================================
 
 -- ── TEST sp_MoLopHocPhan ─────────────────────────────────────
-EXEC sp_MoLopHocPhan
-    @maLHP = N'LHP_121000_01',   -- thay MaLHP đúng từ seed_data
-    @maHK  = N'HK1_2526';
-GO
+-- CALL sp_MoLopHocPhan('LHP_121000_01', 'HK1_2526');
 
 -- ── TEST sp_DongLopHocPhan ───────────────────────────────────
-EXEC sp_DongLopHocPhan @maLHP = N'LHP_121000_01';
-GO
+-- CALL sp_DongLopHocPhan('LHP_121000_01');
 
 -- ── Mở lại để test sp_LayLopConCho ──────────────────────────
-EXEC sp_MoLopHocPhan @maLHP = N'LHP_121000_01', @maHK = N'HK1_2526';
-GO
+-- CALL sp_MoLopHocPhan('LHP_121000_01', 'HK1_2526');
 
 -- ── TEST sp_LayLopConCho ─────────────────────────────────────
-EXEC sp_LayLopConCho @maHK = N'HK1_2526';
-GO
+-- CALL sp_LayLopConCho('HK1_2526');
 
 -- ── TEST lỗi: HK không hợp lệ ───────────────────────────────
--- Kết quả mong đợi: Msg 50002 – "Học kỳ không ở trạng thái có thể mở lớp"
-EXEC sp_MoLopHocPhan @maLHP = N'LHP_121000_01', @maHK = N'HK1_2223';
-GO
+-- Kết quả mong đợi: Error 1644 – "Học kỳ không ở trạng thái có thể mở lớp"
+-- CALL sp_MoLopHocPhan('LHP_121000_01', 'HK1_2223');

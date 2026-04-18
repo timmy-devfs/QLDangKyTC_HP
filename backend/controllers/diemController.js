@@ -1,6 +1,3 @@
-// backend/controllers/diemController.js
-// TV-04  |  Task 3 & Task 4
-
 const svc = require('../services/diemService');
 
 /**
@@ -45,7 +42,7 @@ exports.nhapDiem = async (req, res, next) => {
     const result = await svc.nhapDiem(maDK, Number(diemQT), Number(diemThi));
     res.json({
       success: true,
-      message: 'Nhập điểm thành công. DiemTK và XepLoai được SQL Server tự tính.',
+      message: 'Nhập điểm thành công. DiemTK và XepLoai được MySQL tự tính qua Generated Column.',
       data:    result,
     });
   } catch (err) {

@@ -1,10 +1,9 @@
-// backend/services/dangKyService.js
-// TV-04  |  Task 1 (POST đăng ký – 4 ràng buộc) & Task 2 (DELETE hủy)
-//
-// Lưu ý quan trọng:
+// Quan trọng:
 //   - 4 ràng buộc được kiểm tra TUẦN TỰ trong Node.js (báo lỗi rõ hơn).
-//   - Trigger trg_KiemTraDangKyHopLe (INSTEAD OF) là lớp bảo vệ cuối cùng ở DB.
-//   - Trigger trg_CapNhatSiSo (AFTER) tự cập nhật SiSoHienTai sau INSERT/DELETE.
+//   - Trigger BEFORE INSERT (trg_KiemTraDangKyHopLe - MySQL) là lớp bảo vệ cuối ở DB.
+//   - Trigger AFTER INSERT (trg_CapNhatSiSo_Insert - MySQL) tự tăng SiSoHienTai sau INSERT.
+//   - Khi hủy đăng ký: UPDATE TrangThai = 'Đã hủy' + giảm SiSoHienTai thủ công,
+//     vì trigger MySQL trg_CapNhatSiSo_Delete chỉ bắt sự kiện DELETE, không bắt UPDATE.
 
 const { execQuery } = require('../config/db');
 
@@ -52,7 +51,7 @@ async function kiemTra4DieuKien(maSV, maLHP) {
 
   // ── Điều kiện 3: Không trùng lịch ───────────────────────────────
   const tietKetThuc = lhp.TietBatDau + lhp.SoTiet - 1;
-  const trungLich   = await execQuery(
+  const trungLich = await execQuery(
     `SELECT lhp2.MaLHP, hp2.TenHP, lhp2.ThuHoc,
             lhp2.TietBatDau, lhp2.SoTiet
      FROM   DangKyHocPhan dk
@@ -66,9 +65,9 @@ async function kiemTra4DieuKien(maSV, maLHP) {
        AND  (lhp2.TietBatDau + lhp2.SoTiet - 1) >= :tietBatDau`,
     {
       maSV,
-      maHK:        lhp.MaHocKy,
-      thu:         lhp.ThuHoc,
-      tietBatDau:  lhp.TietBatDau,
+      maHK: lhp.MaHocKy,
+      thu: lhp.ThuHoc,
+      tietBatDau: lhp.TietBatDau,
       tietKetThuc,
     }
   );
@@ -139,7 +138,7 @@ async function dangKy(maSV, maLHP) {
   );
 
   return {
-    maDK:       newRows[0]?.MaDK,
+    maDK: newRows[0]?.MaDK,
     maLHP,
     ngayDangKy: newRows[0]?.NgayDangKy,
   };
@@ -170,14 +169,16 @@ async function getDanhSachDangKy(maSV, maHK) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK 2 – Hủy đăng ký
-// Trigger trg_CapNhatSiSo (AFTER DELETE) tự giảm SiSoHienTai → không cần UPDATE thủ công
+//   Sửa: UPDATE TrangThai = 'Đã hủy' + giảm SiSoHienTai thủ công
+//   Lý do: Trigger MySQL (trg_CapNhatSiSo_Delete) chỉ bắt sự kiện DELETE,
+//   không bắt UPDATE → cần giảm sĩ số thủ công trong application layer.
 // ─────────────────────────────────────────────────────────────────────────────
 async function huyDangKy(maDK, maSV) {
-  // Kiểm tra đăng ký tồn tại và thuộc về SV này
+  // Kiểm tra đăng ký tồn tại và thuộc về SV này, lấy luôn MaLHP để update sĩ số
   const rows = await execQuery(
-    `SELECT dk.MaDK, dk.TrangThai, hk.TrangThai AS TrangThaiHK
+    `SELECT dk.MaDK, dk.MaLHP, dk.TrangThai, hk.TrangThai AS TrangThaiHK
      FROM   DangKyHocPhan dk
-     JOIN   LopHocPhan    lhp ON dk.MaLHP  = lhp.MaLHP
+     JOIN   LopHocPhan    lhp ON dk.MaLHP    = lhp.MaLHP
      JOIN   HocKy         hk  ON lhp.MaHocKy = hk.MaHocKy
      WHERE  dk.MaDK = :maDK AND dk.MaSV = :maSV`,
     { maDK, maSV }
@@ -206,19 +207,24 @@ async function huyDangKy(maDK, maSV) {
     );
   }
 
-  // Cập nhật TrangThai → Trigger AFTER DELETE KHÔNG chạy vì đây là UPDATE, không phải DELETE
-  // → Trigger trg_CapNhatSiSo sẽ chạy khi ta UPDATE TrangThai:
-  //   Trigger dùng INSERTED (dòng mới = Đã hủy) và DELETED (dòng cũ = Đã đăng ký)
-  //   → Chỉ đếm dòng có TrangThai = 'Đã đăng ký' → đúng logic giảm sĩ số
-
-  // Cách đơn giản nhất: UPDATE TrangThai = 'Đã hủy' → NHƯNG trigger AFTER INSERT/DELETE không cover UPDATE
-  // → Dùng cách DELETE thật sự để trigger AFTER DELETE chạy giảm sĩ số
+  //   Bước 1: Cập nhật TrangThai → 'Đã hủy' (giữ lịch sử, không DELETE)
   await execQuery(
-    `DELETE FROM DangKyHocPhan WHERE MaDK = :maDK`,
+    `UPDATE DangKyHocPhan SET TrangThai = 'Đã hủy' WHERE MaDK = :maDK`,
     { maDK }
   );
 
-  // Trigger trg_CapNhatSiSo (AFTER DELETE) đã tự giảm SiSoHienTai
+  //   Bước 2: Giảm SiSoHienTai thủ công (trigger MySQL không bắt UPDATE)
+  await execQuery(
+    `UPDATE LopHocPhan
+     SET SiSoHienTai = GREATEST(0, SiSoHienTai - 1),
+         TrangThai   = CASE
+             WHEN SiSoHienTai - 1 < SiSoToiDa THEN 'Đang mở'
+             ELSE TrangThai
+         END
+     WHERE MaLHP = :maLHP`,
+    { maLHP: dk.MaLHP }
+  );
+
   return { maDK, message: 'Hủy đăng ký thành công. Sĩ số lớp đã được cập nhật.' };
 }
 

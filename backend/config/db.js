@@ -2,7 +2,7 @@ const sql = require('mysql2/promise');
 
 const config = {
   host: process.env.DB_SERVER || 'localhost',
-  database: process.env.DB_NAME || 'QL_DangKyHocPhan',
+  database: process.env.DB_NAME || 'QLDangKyHP',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '12345678',
   port: parseInt(process.env.DB_PORT, 10) || 3306,
@@ -24,6 +24,10 @@ async function connectDB() {
 }
 
 async function execQuery(query, params = {}) {
+  //   Guard: tránh crash khó debug nếu pool chưa được khởi tạo
+  if (!pool) {
+    throw new Error('[DB] Pool chưa được khởi tạo. Hãy gọi connectDB() trước.');
+  }
   const [rows] = await pool.query(query, params);
   return rows;
 }

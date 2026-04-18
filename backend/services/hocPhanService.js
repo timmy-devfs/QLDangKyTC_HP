@@ -1,16 +1,11 @@
-// backend/services/hocPhanService.js
-// TV-03  |  Task 1
-// CRUD HocPhan + quản lý điều kiện tiên quyết
-// Thầy sẽ hỏi: logic kiểm tra vòng tròn tiên quyết
-
 const { execQuery } = require('../config/db');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DANH SÁCH HỌC PHẦN (có paging + tìm kiếm)
 // ─────────────────────────────────────────────────────────────────────────────
 async function getDanhSach({ page = 1, limit = 20, tuKhoa = '', maKhoa = '' }) {
-  const offset  = (page - 1) * limit;
-  const where   = buildWhereHP(tuKhoa, maKhoa);
+  const offset = (page - 1) * limit;
+  const where = buildWhereHP(tuKhoa, maKhoa);
 
   const data = await execQuery(
     `SELECT hp.MaHP, hp.TenHP, hp.SoTinChi, hp.CoTinhGPA,
@@ -32,15 +27,15 @@ async function getDanhSach({ page = 1, limit = 20, tuKhoa = '', maKhoa = '' }) {
 
   return {
     data,
-    total:      countRow[0]?.Total ?? 0,
-    page:       Number(page),
-    limit:      Number(limit),
+    total: countRow[0]?.Total ?? 0,
+    page: Number(page),
+    limit: Number(limit),
     totalPages: Math.ceil((countRow[0]?.Total ?? 0) / limit),
   };
 }
 
 function buildWhereHP(tuKhoa, maKhoa) {
-  const conds  = [];
+  const conds = [];
   const params = {};
   if (tuKhoa) {
     conds.push('(hp.TenHP LIKE :tuKhoa OR hp.MaHP LIKE :tuKhoa)');
@@ -51,7 +46,7 @@ function buildWhereHP(tuKhoa, maKhoa) {
     params.maKhoa = maKhoa;
   }
   return {
-    sql:    conds.length ? 'WHERE ' + conds.join(' AND ') : '',
+    sql: conds.length ? 'WHERE ' + conds.join(' AND ') : '',
     params,
   };
 }
@@ -119,7 +114,7 @@ async function capNhat(maHP, { tenHP, soTinChi, coTinhGPA, maKhoa }) {
   const fields = [];
   const params = { maHP };
 
-  if (tenHP    !== undefined) { fields.push('TenHP    = :tenHP');    params.tenHP    = tenHP;    }
+  if (tenHP !== undefined) { fields.push('TenHP    = :tenHP'); params.tenHP = tenHP; }
   if (soTinChi !== undefined) {
     if (soTinChi < 1 || soTinChi > 15)
       throw Object.assign(new Error('Số tín chỉ phải từ 1 đến 15.'), { status: 400 });
@@ -127,7 +122,7 @@ async function capNhat(maHP, { tenHP, soTinChi, coTinhGPA, maKhoa }) {
     params.soTinChi = soTinChi;
   }
   if (coTinhGPA !== undefined) { fields.push('CoTinhGPA = :coTinhGPA'); params.coTinhGPA = coTinhGPA; }
-  if (maKhoa   !== undefined) { fields.push('MaKhoa   = :maKhoa');   params.maKhoa   = maKhoa;   }
+  if (maKhoa !== undefined) { fields.push('MaKhoa   = :maKhoa'); params.maKhoa = maKhoa; }
 
   if (!fields.length) {
     throw Object.assign(new Error('Không có trường nào để cập nhật.'), { status: 400 });
@@ -268,15 +263,17 @@ async function themDieuKien(maHP, maHPTruoc, loaiDK = 'b') {
 }
 
 async function xoaDieuKien(maHP, maHPTruoc) {
-  const del = await execQuery(
+  const result = await execQuery(
     'DELETE FROM DieuKienHP WHERE MaHP = :maHP AND MaHPTruoc = :maHPTruoc',
     { maHP, maHPTruoc }
   );
-  // Kiểm tra có xóa được không
-  const check = await execQuery(
-    'SELECT 1 FROM DieuKienHP WHERE MaHP = :maHP AND MaHPTruoc = :maHPTruoc',
-    { maHP, maHPTruoc }
-  );
+  //   Dùng affectedRows thay vì SELECT sau DELETE (SELECT luôn trả rỗng sau cùng)
+  if (result.affectedRows === 0) {
+    throw Object.assign(
+      new Error('Điều kiện tiên quyết không tồn tại.'),
+      { status: 404 }
+    );
+  }
   return { message: 'Đã xóa điều kiện tiên quyết.' };
 }
 

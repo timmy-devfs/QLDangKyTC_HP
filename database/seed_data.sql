@@ -1,4 +1,4 @@
-USE QL_DangKyHocPhan;
+USE QLDangKyHP;
 
 -- ============================================================
 -- 1. KHOA
@@ -298,7 +298,7 @@ INSERT INTO TaiKhoan (TenDangNhap, MatKhau, VaiTro, MaSV, MaGV) VALUES
 ('gv002',      'hashed_UTH@12345', 'GiangVien',  NULL,         'GV000002'),
 ('gv003',      'hashed_UTH@12345', 'GiangVien',  NULL,         'GV000003');
 
--- Tài khoản sinh viên (Sử dụng hàm CONCAT() thay vì toán tử '+' của T-SQL)
+-- Tài khoản sinh viên: dùng CONCAT() chuẩn MySQL để tạo mật khẩu mặc định
 INSERT INTO TaiKhoan (TenDangNhap, MatKhau, VaiTro, MaSV)
 SELECT MaSV, CONCAT('hashed_UTH@', MaSV), 'SinhVien', MaSV FROM SinhVien;
 
