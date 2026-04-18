@@ -17,11 +17,10 @@ const giangVienController = {
     // 2. Thêm giảng viên mới
     create: async (req, res) => {
         try {
-            // Sửa lỗi chính tả: 'BoPmon' thành 'BoMon' để khớp với Database thường dùng
-            const { MaGV, HoTen, BoMon, HocVi, Email, SoDienThoai } = req.body;
+            const { MaGV, HoTen, GioiTinh, NgaySinh, Email, SoDienThoai, HocVi, MaKhoa } = req.body;
 
-            // Kiểm tra dữ liệu đầu vào (Tránh lỗi Undefined Parameters đã gặp)
-            if (!MaGV || !HoTen || !Email) {
+            // Kiểm tra dữ liệu đầu vào
+            if (!MaGV || !HoTen || !Email || !MaKhoa) {
                 return res.status(400).json({ success: false, message: 'Thiếu thông tin bắt buộc!' });
             }
 
@@ -33,8 +32,8 @@ const giangVienController = {
                 return res.status(400).json({ success: false, message: 'Email này đã được sử dụng!' });
             }
 
-            const sql = 'INSERT INTO GiangVien (MaGV, HoTen, BoMon, HocVi, Email, SoDienThoai) VALUES (?, ?, ?, ?, ?, ?)';
-            await execQuery(sql, [MaGV, HoTen, BoMon, HocVi, Email, SoDienThoai]);
+            const sql = 'INSERT INTO GiangVien (MaGV, HoTen, GioiTinh, NgaySinh, Email, SoDienThoai, HocVi, MaKhoa) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+            await execQuery(sql, [MaGV, HoTen, GioiTinh || 'Nam', NgaySinh, Email, SoDienThoai, HocVi, MaKhoa]);
             res.json({ success: true, message: 'Thêm giảng viên thành công' });
 
         } catch (error) {
@@ -47,7 +46,7 @@ const giangVienController = {
     update: async (req, res) => {
         try {
             const { id } = req.params; 
-            const { HoTen, BoMon, HocVi, Email, SoDienThoai } = req.body;
+            const { HoTen, GioiTinh, NgaySinh, Email, SoDienThoai, HocVi, MaKhoa } = req.body;
 
             const checkEmailSql = 'SELECT * FROM GiangVien WHERE Email = ? AND MaGV != ?';
             const existingEmail = await execQuery(checkEmailSql, [Email, id]);
@@ -56,11 +55,12 @@ const giangVienController = {
                 return res.status(400).json({ success: false, message: 'Email đã tồn tại ở giảng viên khác!' });
             }
 
-            const sql = 'UPDATE GiangVien SET HoTen = ?, BoMon = ?, HocVi = ?, Email = ?, SoDienThoai = ? WHERE MaGV = ?';
-            await execQuery(sql, [HoTen, BoMon, HocVi, Email, SoDienThoai, id]);
+            const sql = 'UPDATE GiangVien SET HoTen = ?, GioiTinh = ?, NgaySinh = ?, Email = ?, SoDienThoai = ?, HocVi = ?, MaKhoa = ? WHERE MaGV = ?';
+            await execQuery(sql, [HoTen, GioiTinh, NgaySinh, Email, SoDienThoai, HocVi, MaKhoa, id]);
             res.json({ success: true, message: 'Cập nhật giảng viên thành công' });
 
         } catch (error) {
+            console.error('Lỗi update giảng viên:', error.message);
             res.status(500).json({ success: false, message: error.message });
         }
     },

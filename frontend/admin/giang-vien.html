@@ -250,6 +250,13 @@
             transform: translateY(0);
         }
 
+        .modal form {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+        }
+
         .modal-header {
             padding: 20px 24px;
             border-bottom: 1px solid #f1f5f9;
@@ -276,6 +283,7 @@
         .modal-body {
             padding: 24px;
             overflow-y: auto;
+            flex: 1;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
@@ -416,7 +424,8 @@
                                 <tr>
                                     <th>Mã GV</th>
                                     <th>Họ và Tên</th>
-                                    <th>Bộ môn</th>
+                                    <th>Giới tính</th>
+                                    <th>Khoa</th>
                                     <th>Học vị</th>
                                     <th>Liên hệ</th>
                                     <th>Thao tác</th>
@@ -449,24 +458,42 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Họ và Tên</label>
-                        <input type="text" id="txtHoTen" class="form-control" required
-                            placeholder="Nhập họ tên đầy đủ...">
+                        <input type="text" id="txtHoTen" class="form-control" required placeholder="Nhập họ tên...">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Bộ môn / Khoa</label>
-                        <input type="text" id="txtBoMon" class="form-control" required placeholder="VD: Khoa CNTT">
+                        <label class="form-label">Giới tính</label>
+                        <select id="txtGioiTinh" class="form-control" required>
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Học vị</label>
-                        <input type="text" id="txtHocVi" class="form-control" placeholder="VD: ThS, TS...">
+                        <label class="form-label">Ngày sinh</label>
+                        <input type="date" id="txtNgaySinh" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Email</label>
+                        <label class="form-label">Địa chỉ Email</label>
                         <input type="email" id="txtEmail" class="form-control" required placeholder="Địa chỉ email...">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Số điện thoại</label>
                         <input type="text" id="txtSDT" class="form-control" placeholder="Số điện thoại cá nhân...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Học vị</label>
+                        <select id="txtHocVi" class="form-control">
+                            <option value="">-- Chọn học vị --</option>
+                            <option value="ThS">Thạc sĩ (ThS)</option>
+                            <option value="TS">Tiến sĩ (TS)</option>
+                            <option value="PGS">Phó Giáo sư (PGS)</option>
+                            <option value="GS">Giáo sư (GS)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Khoa công tác</label>
+                        <select id="txtMaKhoa" class="form-control" required>
+                            <option value="">-- Chọn khoa --</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -513,7 +540,8 @@
                 <tr>
                     <td style="font-weight:600; color:var(--color-primary);">${db.MaGV}</td>
                     <td style="font-weight:500;">${db.HoTen}</td>
-                    <td>${db.BoMon || '-'}</td>
+                    <td>${db.GioiTinh}</td>
+                    <td><span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600;">${db.MaKhoa || '-'}</span></td>
                     <td><span style="background:#e0f2fe; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600; color:#0284c7;">${db.HocVi || '-'}</span></td>
                     <td style="font-size:13px;">
                         <div>📧 ${db.Email}</div>
@@ -521,7 +549,7 @@
                     </td>
                     <td>
                         <div class="btn-group">
-                            <button class="btn-edit" onclick="openModal(true, '${db.MaGV}', '${(db.HoTen || '').replace(/'/g, "\\'")}', '${(db.BoMon || '').replace(/'/g, "\\'")}', '${(db.HocVi || '').replace(/'/g, "\\'")}', '${db.Email || ''}', '${db.SoDienThoai || ''}')">Sửa</button>
+                            <button class="btn-edit" onclick="editObj(${JSON.stringify(db).replace(/"/g, '&quot;')})">Sửa</button>
                             <button class="btn-delete" onclick="deleteObj('${db.MaGV}', '${(db.HoTen || '').replace(/'/g, "\\'")}')">Xóa</button>
                         </div>
                     </td>
@@ -532,22 +560,41 @@
             }
         }
 
-        function openModal(isEdit = false, maGV = '', hoTen = '', boMon = '', hocVi = '', email = '', sdt = '') {
-            isEditMode = isEdit;
-            currentEditId = maGV;
+        async function loadDepartments() {
+            try {
+                const res = await api.get('/khoa');
+                const list = res.data || res;
+                const select = document.getElementById('txtMaKhoa');
+                select.innerHTML = '<option value="">-- Chọn khoa --</option>' + 
+                    list.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa} (${k.MaKhoa})</option>`).join('');
+            } catch (e) {
+                console.error('Lỗi tải khoa:', e);
+            }
+        }
 
-            document.getElementById('modalTitle').textContent = isEdit ? 'Sửa thông tin Giảng viên' : 'Thêm Giảng viên mới';
+        function openModal() {
+            isEditMode = false;
+            currentEditId = null;
+            document.getElementById('modalTitle').textContent = 'Thêm Giảng viên mới';
+            document.getElementById('txtMaGV').disabled = false;
+            document.getElementById('gvForm').reset();
+            document.getElementById('gvModal').classList.add('open');
+        }
 
-            const txtMaGV = document.getElementById('txtMaGV');
-            txtMaGV.value = maGV;
-            document.getElementById('txtHoTen').value = hoTen;
-            document.getElementById('txtBoMon').value = boMon;
-            document.getElementById('txtHocVi').value = hocVi;
-            document.getElementById('txtEmail').value = email;
-            document.getElementById('txtSDT').value = sdt;
-
-            // Nếu sửa, không cho phép đổi Mã GV
-            txtMaGV.disabled = isEdit;
+        function editObj(db) {
+            isEditMode = true;
+            currentEditId = db.MaGV;
+            document.getElementById('modalTitle').textContent = 'Sửa thông tin Giảng viên';
+            
+            document.getElementById('txtMaGV').value = db.MaGV;
+            document.getElementById('txtMaGV').disabled = true;
+            document.getElementById('txtHoTen').value = db.HoTen;
+            document.getElementById('txtGioiTinh').value = db.GioiTinh || 'Nam';
+            document.getElementById('txtNgaySinh').value = db.NgaySinh ? db.NgaySinh.split('T')[0] : '';
+            document.getElementById('txtEmail').value = db.Email;
+            document.getElementById('txtSDT').value = db.SoDienThoai || '';
+            document.getElementById('txtHocVi').value = db.HocVi || '';
+            document.getElementById('txtMaKhoa').value = db.MaKhoa;
 
             document.getElementById('gvModal').classList.add('open');
         }
@@ -563,10 +610,12 @@
             const payload = {
                 MaGV: document.getElementById('txtMaGV').value,
                 HoTen: document.getElementById('txtHoTen').value,
-                BoMon: document.getElementById('txtBoMon').value,
-                HocVi: document.getElementById('txtHocVi').value,
+                GioiTinh: document.getElementById('txtGioiTinh').value,
+                NgaySinh: document.getElementById('txtNgaySinh').value || null,
                 Email: document.getElementById('txtEmail').value,
-                SoDienThoai: document.getElementById('txtSDT').value
+                SoDienThoai: document.getElementById('txtSDT').value,
+                HocVi: document.getElementById('txtHocVi').value,
+                MaKhoa: document.getElementById('txtMaKhoa').value
             };
 
             try {
@@ -598,6 +647,7 @@
         }
 
         // Init
+        loadDepartments();
         loadData();
     </script>
 </body>

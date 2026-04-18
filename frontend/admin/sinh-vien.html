@@ -235,15 +235,25 @@
             background: white;
             border-radius: 10px;
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             transform: translateY(-20px);
             transition: transform 0.2s;
             overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-overlay.open .modal {
             transform: translateY(0);
+        }
+
+        .modal form {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
         }
 
         .modal-header {
@@ -270,6 +280,8 @@
 
         .modal-body {
             padding: 24px;
+            overflow-y: auto;
+            flex: 1;
         }
 
         .modal-footer {
@@ -404,7 +416,9 @@
                                     <th>Mã SV</th>
                                     <th>Họ và Tên</th>
                                     <th>Ngày Sinh</th>
-                                    <th>Lớp</th>
+                                    <th>Giới tính</th>
+                                    <th>Ngành</th>
+                                    <th>Khóa</th>
                                     <th>Thao tác</th>
                                 </tr>
                             </thead>
@@ -437,13 +451,51 @@
                         <label class="form-label">Họ và Tên</label>
                         <input type="text" id="txtHoTen" class="form-control" required placeholder="Nhập họ tên...">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Ngày sinh</label>
-                        <input type="date" id="txtNgaySinh" class="form-control" required>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Ngày sinh</label>
+                            <input type="date" id="txtNgaySinh" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Giới tính</label>
+                            <select id="txtGioiTinh" class="form-control" required>
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Lớp</label>
-                        <input type="text" id="txtLop" class="form-control" required placeholder="VD: KHMT01">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="txtEmail" class="form-control" required placeholder="example@uth.edu.vn">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Số điện thoại</label>
+                        <input type="text" id="txtSDT" class="form-control" placeholder="09xxx...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Địa chỉ</label>
+                        <input type="text" id="txtDiaChi" class="form-control" placeholder="Nhập địa chỉ tạm trú/thường trú">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label">Ngành học</label>
+                            <select id="txtMaNganh" class="form-control" required>
+                                <option value="">-- Chọn ngành --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Năm nhập học</label>
+                            <input type="number" id="txtNamNhapHoc" class="form-control" required placeholder="VD: 2022">
+                        </div>
+                    </div>
+                    <div class="form-group" id="trangThaiGroup" style="display:none;">
+                        <label class="form-label">Trạng thái</label>
+                        <select id="txtTrangThai" class="form-control">
+                            <option value="Đang học">Đang học</option>
+                            <option value="Bảo lưu">Bảo lưu</option>
+                            <option value="Tốt nghiệp">Tốt nghiệp</option>
+                            <option value="Thôi học">Thôi học</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -486,7 +538,6 @@
                 }
 
                 tbody.innerHTML = data.map(db => {
-                    // Xử lý ngày sinh an toàn
                     const ngaySinh = db.NgaySinh ? new Date(db.NgaySinh).toLocaleDateString('vi-VN') : '';
                     const isoDate = db.NgaySinh ? new Date(db.NgaySinh).toISOString().split('T')[0] : '';
                     return `
@@ -494,10 +545,12 @@
                     <td style="font-weight:600; color:var(--color-primary);">${db.MaSV}</td>
                     <td style="font-weight:500;">${db.HoTen}</td>
                     <td>${ngaySinh}</td>
-                    <td><span style="background:#e2e8f0; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600;">${db.Lop}</span></td>
+                    <td>${db.GioiTinh}</td>
+                    <td>${db.MaNganh}</td>
+                    <td><span style="background:#e2e8f0; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:600;">K${db.NamNhapHoc}</span></td>
                     <td>
                         <div class="btn-group">
-                            <button class="btn-edit" onclick="openModal(true, '${db.MaSV}', '${db.HoTen.replace(/'/g, "\\'")}', '${isoDate}', '${db.Lop}')">Sửa</button>
+                            <button class="btn-edit" onclick="editObj(${JSON.stringify(db).replace(/"/g, '&quot;')})">Sửa</button>
                             <button class="btn-delete" onclick="deleteObj('${db.MaSV}', '${db.HoTen.replace(/'/g, "\\'")}')">Xóa</button>
                         </div>
                     </td>
@@ -508,20 +561,46 @@
             }
         }
 
-        function openModal(isEdit = false, maSV = '', hoTen = '', ngaySinh = '', lop = '') {
-            isEditMode = isEdit;
-            currentEditId = maSV;
+        async function loadMajors() {
+            try {
+                const res = await api.get('/nganh');
+                const list = res.data || res;
+                const select = document.getElementById('txtMaNganh');
+                select.innerHTML = '<option value="">-- Chọn ngành --</option>' + 
+                    list.map(n => `<option value="${n.MaNganh}">${n.TenNganh} (${n.MaNganh})</option>`).join('');
+            } catch (e) {
+                console.error('Lỗi tải ngành:', e);
+            }
+        }
 
-            document.getElementById('modalTitle').textContent = isEdit ? 'Sửa thông tin Sinh viên' : 'Thêm Sinh viên mới';
+        function openModal() {
+            isEditMode = false;
+            currentEditId = null;
+            document.getElementById('modalTitle').textContent = 'Thêm Sinh viên mới';
+            document.getElementById('txtMaSV').disabled = false;
+            document.getElementById('trangThaiGroup').style.display = 'none';
+            document.getElementById('svForm').reset();
+            document.getElementById('svModal').classList.add('open');
+        }
 
-            const txtMaSV = document.getElementById('txtMaSV');
-            txtMaSV.value = maSV;
-            document.getElementById('txtHoTen').value = hoTen;
-            document.getElementById('txtNgaySinh').value = ngaySinh;
-            document.getElementById('txtLop').value = lop;
-
-            // Nếu sửa, không cho phép đổi Mã SV
-            txtMaSV.disabled = isEdit;
+        function editObj(db) {
+            isEditMode = true;
+            currentEditId = db.MaSV;
+            document.getElementById('modalTitle').textContent = 'Sửa thông tin Sinh viên';
+            
+            document.getElementById('txtMaSV').value = db.MaSV;
+            document.getElementById('txtMaSV').disabled = true;
+            document.getElementById('txtHoTen').value = db.HoTen;
+            document.getElementById('txtNgaySinh').value = db.NgaySinh ? db.NgaySinh.split('T')[0] : '';
+            document.getElementById('txtGioiTinh').value = db.GioiTinh || 'Nam';
+            document.getElementById('txtEmail').value = db.Email || '';
+            document.getElementById('txtSDT').value = db.SoDienThoai || '';
+            document.getElementById('txtDiaChi').value = db.DiaChi || '';
+            document.getElementById('txtMaNganh').value = db.MaNganh;
+            document.getElementById('txtNamNhapHoc').value = db.NamNhapHoc;
+            
+            document.getElementById('trangThaiGroup').style.display = 'block';
+            document.getElementById('txtTrangThai').value = db.TrangThai;
 
             document.getElementById('svModal').classList.add('open');
         }
@@ -538,7 +617,13 @@
                 MaSV: document.getElementById('txtMaSV').value,
                 HoTen: document.getElementById('txtHoTen').value,
                 NgaySinh: document.getElementById('txtNgaySinh').value,
-                Lop: document.getElementById('txtLop').value
+                GioiTinh: document.getElementById('txtGioiTinh').value,
+                Email: document.getElementById('txtEmail').value,
+                SoDienThoai: document.getElementById('txtSDT').value,
+                DiaChi: document.getElementById('txtDiaChi').value,
+                MaNganh: document.getElementById('txtMaNganh').value,
+                NamNhapHoc: parseInt(document.getElementById('txtNamNhapHoc').value),
+                TrangThai: isEditMode ? document.getElementById('txtTrangThai').value : 'Đang học'
             };
 
             try {
@@ -569,6 +654,7 @@
         }
 
         // Init
+        loadMajors();
         loadData();
     </script>
 </body>

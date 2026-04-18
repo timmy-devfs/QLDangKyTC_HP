@@ -26,6 +26,7 @@ app.use('/api/dang-ky', require('./routes/dangKyRoutes'));
 app.use('/api/diem', require('./routes/diemRoutes'));
 app.use('/api/bao-cao', require('./routes/baoCaoRoutes'));
 app.use('/api/khoa', require('./routes/khoaRoutes'));
+app.use('/api/nganh', require('./routes/nganhRoutes'));
 
 /* Error handler */
 app.use(require('./middleware/errorHandler'));
