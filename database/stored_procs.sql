@@ -218,21 +218,5 @@ END;
 DELIMITER ;
 
 -- ============================================================
--- TEST SCRIPT – Thay EXEC bằng CALL (cú pháp MySQL)
+-- Để kiểm thử các stored procedures, chạy file: test_script.sql
 -- ============================================================
-
--- ── TEST sp_MoLopHocPhan ─────────────────────────────────────
--- CALL sp_MoLopHocPhan('LHP_121000_01', 'HK1_2526');
-
--- ── TEST sp_DongLopHocPhan ───────────────────────────────────
--- CALL sp_DongLopHocPhan('LHP_121000_01');
-
--- ── Mở lại để test sp_LayLopConCho ──────────────────────────
--- CALL sp_MoLopHocPhan('LHP_121000_01', 'HK1_2526');
-
--- ── TEST sp_LayLopConCho ─────────────────────────────────────
--- CALL sp_LayLopConCho('HK1_2526');
-
--- ── TEST lỗi: HK không hợp lệ ───────────────────────────────
--- Kết quả mong đợi: Error 1644 – "Học kỳ không ở trạng thái có thể mở lớp"
--- CALL sp_MoLopHocPhan('LHP_121000_01', 'HK1_2223');

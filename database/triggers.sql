@@ -144,20 +144,5 @@ END;
 DELIMITER ;
 
 -- ============================================================
--- TEST SCRIPT – Chạy từng lệnh trên MySQL Workbench
+-- Để kiểm thử các triggers, chạy file: test_script.sql
 -- ============================================================
-
--- ── TEST 1: Kiểm tra sĩ số trước ─────────────────────────
--- SELECT MaLHP, SiSoHienTai, SiSoToiDa, TrangThai
--- FROM LopHocPhan WHERE MaLHP = 'LHP_121000_01';
-
--- ── TEST 2: Đăng ký (trigger BEFORE → INSERT → AFTER)
--- INSERT INTO DangKyHocPhan(MaSV, MaLHP) VALUES ('2354010001', 'LHP_121000_01');
-
--- ── TEST 3: Kiểm tra SiSoHienTai đã tăng ─────────────────
--- SELECT MaLHP, SiSoHienTai, TrangThai FROM LopHocPhan WHERE MaLHP = 'LHP_121000_01';
-
--- ── TEST 4: Đăng ký lớp đầy → SIGNAL phải báo lỗi ────────
--- UPDATE LopHocPhan SET SiSoHienTai = SiSoToiDa WHERE MaLHP = 'LHP_121000_01';
--- INSERT INTO DangKyHocPhan(MaSV, MaLHP) VALUES ('2354010012', 'LHP_121000_01');
--- Kết quả mong đợi: Error 1644 – "Lớp học phần đã đầy..."
